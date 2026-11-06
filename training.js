@@ -33,7 +33,7 @@ const GAITS = {
     hip: curve([[0, 35], [.2, 10], [.38, -12], [.5, 0], [.75, 45], [.9, 48], [1, 35]]),
     knee: curve([[0, 18], [.15, 42], [.38, 18], [.6, 85], [.72, 105], [.9, 35], [1, 18]]),
     ankle: curve([[0, 8], [.12, 22], [.36, -28], [.5, -18], [.8, 10], [1, 8]]),
-    arm: 36, elbow: 95, flight: 0.2,
+    arm: 26, elbow: 92, flight: 0.2,
   },
   // Sprint: kurzer Bodenkontakt auf dem Vorfuss, lange Flugphase, Knie hoch vorn, Ferse schwingt zum Gesaess, grosser Armeinsatz mit Ellbogen ~90
   sprinten: {
@@ -41,7 +41,7 @@ const GAITS = {
     hip: curve([[0, 32], [.12, 8], [.23, -16], [.4, 10], [.6, 58], [.78, 74], [.92, 52], [1, 32]]),
     knee: curve([[0, 28], [.08, 42], [.23, 20], [.42, 95], [.55, 125], [.75, 95], [.92, 35], [1, 28]]),
     ankle: curve([[0, 2], [.08, 14], [.23, -32], [.4, -14], [.8, 6], [1, 2]]),
-    arm: 48, elbow: 90, flight: 0.5,
+    arm: 40, elbow: 88, flight: 0.5,
   },
   dribbeln: {
     title: 'Dribbeln', speed: 3.2, period: 0.56, duty: 0.42, bob: 0.05, lift: 0.3, trunk: 7, hipY: -10, pelvis: 4, chest: 8, shift: .8, tilt: 1.3, curl: 40, elbowAmp: 12,
@@ -83,10 +83,16 @@ function setGait(th, ph, g) {
   const trunk = clamp(th[r], -10, 40);
   const armPhase = Math.PI / 2 + th[r + 2] * 0.02;
   // Locker statt Roboter: der Unterarm und die Hand laufen dem Oberarm nach, die Schulter schwingt mit
+  // Laufstil nach Lauftechnik-Quellen (Nutzer: "rudert", Arme naeher am Koerper): Oberarm pendelt fast genau vor/zurueck
+  // (vorn leicht zur Mitte, ohne sie zu kreuzen; hinten kaum nach aussen), Hand von der Huefte bis zur Brust, hinten etwas weiter
+  // als vorn; Ellbogen um 90 und im Takt mit dem Oberarm (vorn etwas mehr gebeugt). Der fruehere Versatz des Ellbogens
+  // (Phase -0,6) liess die Hand eine Schleife ziehen, die Ebene +-72 und 6 Grad Grundabspreizung hielten die Arme vom Koerper weg.
   const armAt = (s, f) => {
-    const a = TAU * f + armPhase, sw = th[r + 1] * Math.sin(a);
-    j[s + 'Arm'].ebene = sw >= 0 ? 72 : -72; j[s + 'Arm'].heben = clamp(Math.abs(sw) + 6, 0, 120);
-    j[s + 'ForeArm'].beug = clamp(th[r + 3] + th[r + 4] * Math.sin(a - 0.6), 0, 140);
+    const a = TAU * f + armPhase, raw = th[r + 1] * Math.sin(a), sw = raw >= 0 ? raw * 0.85 : raw * 1.1;
+    j[s + 'Arm'].ebene = sw >= 0 ? 100 : -88; j[s + 'Arm'].heben = clamp(Math.abs(sw) + 2, 0, 120);
+    j[s + 'Arm'].dreh = -14;   // leicht innenrotiert: Unterarm zeigt vor den Koerper, Haende pendeln zur Mitte (nicht darueber)
+    const eAmp = Math.min(10, Math.abs(th[r + 4]));
+    j[s + 'ForeArm'].beug = clamp(th[r + 3] + eAmp * raw / (Math.abs(th[r + 1]) || 1), 0, 140);
     j[s + 'Hand'].beug = clamp(3 - 3 * Math.sin(a - 1.0), -20, 30);
     j[s + 'Shoulder'].vor = clamp(sw * 0.12, -20, 25);
     j[s + 'Shoulder'].heben = clamp(1 + Math.abs(sw) * 0.02, -10, 40);
@@ -338,27 +344,35 @@ function evalUp() {
 const CYCLES = {
   rueckwaerts: { axis: 'z', dir: -1, speed: 2.0, period: .6, duty: .5, lift: .06, drop: .05, bob: .03, trunk: 9, elbow: 85, amp: 22, base: [0, 0], curl: 50, ball: .035, pelvis: 4 },
   seitwaerts: { axis: 'x', dir: 1, speed: 1.8, period: .55, duty: .45, lift: .055, drop: .12, bob: .03, trunk: 10, elbow: 70, amp: 12, base: [.28, -.28], curl: 35, ball: 0, pelvis: 0 },
-  // Aufrecht (Feldspieler, Schiedsrichter): rueckwaerts und seitwaerts gehen/laufen ohne Torwart-Hocke.
+  // Feldspieler, Schiedsrichter, Linienrichter (Nutzer: "kein Moonwalking"): aufrecht statt Torwart-Hocke.
   // Rueckwaerts gehen: kurze Schritte (~0,43 m), Vorfuss zuerst, Rumpf kaum vor, Arme locker.
   rueckwaerts_gehen: { axis: 'z', dir: -1, speed: 1.0, period: .85, duty: .6, lift: .045, drop: .02, bob: .02, trunk: 5, elbow: 22, amp: 14, base: [0, 0], curl: 22, ball: .012, pelvis: 3 },
   // Seitwaerts gehen (Nachstellschritt): Fuesse 0,15 bis 0,65 m auseinander, nie gekreuzt; Arme haengen fast am Koerper
   seitwaerts_gehen: { axis: 'x', dir: 1, speed: 1.0, period: .5, duty: .6, lift: .04, drop: .03, bob: .015, trunk: 3, elbow: 20, amp: 3, base: [.2, -.2], curl: 22, ball: 0, pelvis: 0, armUp: 9 },
   // Seitwaerts laufen (Linienrichter, Sidestep im Lauf): Fuesse 0,2 bis 0,75 m, kurzer Flug, Arme zur Balance leicht ab, Ellbogen gebeugt
   seitwaerts_laufen: { axis: 'x', dir: 1, speed: 2.6, period: .36, duty: .32, lift: .07, drop: .05, bob: .035, trunk: 6, elbow: 75, amp: 8, base: [.24, -.24], curl: 45, ball: .02, pelvis: 0, armUp: 18 },
+  // Humpeln (Schonhinken, linkes Bein verletzt; rechts = gespiegelt): kurze Standphase auf dem verletzten Bein (Einzelstand 0,36
+  // gegen 0,5 des Zyklus), Fuss setzt flach auf und hebt kaum (steifes Knie, leicht im Bogen nach aussen), Oberkoerper neigt sich
+  // waehrend des Stands ueber das verletzte Bein (entlastet die Huefte), beim Auftreten aufs gesunde Bein sackt das Becken ab.
+  // Langsam: 0,9 m/s. duty/lift je Seite [links, rechts].
+  humpeln: { axis: 'z', dir: 1, speed: .9, period: 1.1, duty: [.5, .64], lift: [.025, .06], drop: .045, bob: 0, dip: .018, trunk: 6, elbow: 20, amp: 12, base: [0, 0], curl: 25, ball: 0, pelvis: 3, lean: 7, circ: .04, limp: 0 },
 };
 const cycleBake = {};
 function bakeCycle(name) {
-  const c = CYCLES[name], j = p.pose.j, S = c.speed * c.period * c.duty, F = 24;
+  const c = CYCLES[name], j = p.pose.j, F = 24;
+  // je Seite eigener Standanteil und Fusshub (Humpeln), sonst fuer beide gleich
+  const duty = i => Array.isArray(c.duty) ? c.duty[i] : c.duty, lift = i => Array.isArray(c.lift) ? c.lift[i] : c.lift;
+  const Sd = i => c.speed * c.period * duty(i);
   p.opts.ground = false;
   resetPose(); p.applyPoseFast();
   const H0 = p.wpos('Hips').clone(), ankle = p.wpos('LeftFoot').y - Math.min(p.mpos('LeftHeel').y, p.mpos('LeftToeTip').y);
   const spread = Math.abs(p.wpos('LeftFoot').x) * 0.8, standY = H0.y - p.wpos('LeftFoot').y + ankle - 0.005;
   const L1 = p.wpos('LeftUpLeg').distanceTo(p.wpos('LeftLeg')), L2 = p.wpos('LeftLeg').distanceTo(p.wpos('LeftFoot'));
   const footAt = (i, ph) => {            // Lage des Fusses relativ zur Koerpermitte
-    const q = ph - Math.floor(ph);
-    if (q < c.duty) return { a: c.dir * (S / 2 - S * (q / c.duty)), y: 0, stance: true, u: q / c.duty };
-    const v = (q - c.duty) / (1 - c.duty), sm = v * v * (3 - 2 * v);
-    return { a: c.dir * (-S / 2 + S * sm), y: c.lift * Math.sin(Math.PI * v), stance: false, u: v };
+    const q = ph - Math.floor(ph), d = duty(i), S = Sd(i);
+    if (q < d) return { a: c.dir * (S / 2 - S * (q / d)), y: 0, stance: true, u: q / d };
+    const v = (q - d) / (1 - d), sm = v * v * (3 - 2 * v);
+    return { a: c.dir * (-S / 2 + S * sm), y: lift(i) * Math.sin(Math.PI * v), stance: false, u: v };
   };
   const legTo = (sd, x, y, z) => {
     p.applyPoseFast();
@@ -381,6 +395,14 @@ function bakeCycle(name) {
     const ph = i / F, tw = Math.cos(TAU * ph), sw2 = Math.cos(2 * TAU * ph), sn = Math.sin(TAU * ph);
     resetPose();
     j.Hips.y = (standY - c.drop + c.bob * 0.5 * sw2 - H0.y) * 100;
+    // Humpeln: Neigung ueber das verletzte Bein waehrend seines Stands, Absacken beim Auftreten aufs gesunde Bein
+    if (c.limp !== undefined) {
+      const fi = footAt(c.limp, ph + (c.limp ? .5 : 0)), fh = footAt(1 - c.limp, ph + (c.limp ? 0 : .5));
+      const wi = fi.stance ? Math.sin(Math.PI * fi.u) : 0, wh = fh.stance ? Math.sin(Math.PI * Math.min(1, fh.u * 2)) : 0;
+      const sgn = c.limp === 0 ? 1 : -1;   // seit + = nach links
+      j.Hips.y -= c.dip * wh * 100;
+      j.Spine.seit = sgn * c.lean * wi * .4; j.Spine1.seit = sgn * c.lean * wi * .6; j.Neck.seit = -sgn * c.lean * wi * .5;
+    }
     j.Hips.vor = c.trunk * .5; j.Spine.beug = c.trunk * .25; j.Spine1.beug = c.trunk * .15; j.Spine2.beug = c.trunk * .1;
     const pelvis = c.pelvis * tw;
     j.Hips.dreh = pelvis; j.Spine1.dreh = clamp(-pelvis * .9, -12, 12); j.Spine2.dreh = clamp(-pelvis * .9, -15, 15);
@@ -390,9 +412,9 @@ function bakeCycle(name) {
     if (c.axis === 'z') j.Hips.x = 1.2 * sn; else { j.Hips.seit = 1.5 * sn; j.Neck.seit = -1.5 * sn; }
     setHands(c.curl);
     const feet = {};
-    [['Left', 1, 0, 0], ['Right', -1, 1, .5]].forEach(([sd, sg, bi, off]) => {
+    [['Left', 1, 0, 0], ['Right', -1, 1, c.offset ?? .5]].forEach(([sd, sg, bi, off]) => {
       const f = footAt(bi, ph + off); feet[sd] = f;
-      const lateral = c.axis === 'x' ? c.base[bi] + f.a : sg * spread;
+      const lateral = c.axis === 'x' ? c.base[bi] + f.a : sg * (spread + (c.limp === bi && !f.stance ? (c.circ || 0) * Math.sin(Math.PI * f.u) : 0));
       const forward = c.axis === 'z' ? f.a : 0.02;
       j[sd + 'Foot'].heb = 0;
       const stanceY = ankle + (c.ball ? .02 : 0);
@@ -407,7 +429,7 @@ function bakeCycle(name) {
     });
     // Arme gegengleich; seitwaerts nur wenig und zur Balance leicht abgespreizt
     [['Left', 'Right'], ['Right', 'Left']].forEach(([sd, other]) => {
-      const sw = c.axis === 'z' ? c.amp * feet[other].a / (S / 2) : c.amp * (sd === 'Left' ? sn : -sn);
+      const sw = c.axis === 'z' ? c.amp * feet[other].a / (Sd(other === 'Left' ? 0 : 1) / 2) : c.amp * (sd === 'Left' ? sn : -sn);
       if (c.axis === 'z') { j[sd + 'Arm'].ebene = sw >= 0 ? 80 : -80; j[sd + 'Arm'].heben = Math.abs(sw) + 3; }
       else { j[sd + 'Arm'].ebene = 25; j[sd + 'Arm'].heben = (c.armUp ?? 22) + sw; }
       j[sd + 'ForeArm'].beug = c.elbow + sw * .25;
@@ -691,6 +713,7 @@ const ES = {
   rueckwaerts_gehen: makeES('rueckwaerts_gehen', 0, 1, [], () => evalCycle('rueckwaerts_gehen'), null),
   seitwaerts_gehen: makeES('seitwaerts_gehen', 0, 1, [], () => evalCycle('seitwaerts_gehen'), null),
   seitwaerts_laufen: makeES('seitwaerts_laufen', 0, 1, [], () => evalCycle('seitwaerts_laufen'), null),
+  humpeln: makeES('humpeln', 0, 1, [], () => evalCycle('humpeln'), null),
   fangen: makeES('fangen', 0, 1, [], () => evalJump('fangen'), null),
   fangen_flach: makeES('fangen_flach', 0, 1, [], () => evalJump('fangen_flach'), null),
   fangen_hoch: makeES('fangen_hoch', 0, 1, [], () => evalJump('fangen_hoch'), null),
@@ -699,7 +722,7 @@ const ES = {
   sprung: makeES('sprung', 0, 1, [], () => evalJump('sprung'), null),
   sprung_lauf: makeES('sprung_lauf', 0, 1, [], () => evalJump('sprung_lauf'), null),
 };
-const NAMES = { gehen: 'Gehen', laufen: 'Laufen', sprinten: 'Sprinten', dribbeln: 'Dribbeln', aufstehen: 'Aufstehen', rueckwaerts: 'Rückwärts', seitwaerts: 'Seitwärts', rueckwaerts_gehen: 'Rückwärts gehen', seitwaerts_gehen: 'Seitwärts gehen', seitwaerts_laufen: 'Seitwärts laufen', fangen: 'Fangen', fangen_flach: 'Fangen flach', fangen_hoch: 'Fangen hoch', halten: 'Ball halten', halten_gehen: 'Gehen mit Ball', sprung: 'Sprung', sprung_lauf: 'Sprung aus dem Lauf' };
+const NAMES = { gehen: 'Gehen', laufen: 'Laufen', sprinten: 'Sprinten', dribbeln: 'Dribbeln', aufstehen: 'Aufstehen', rueckwaerts: 'Rückwärts', seitwaerts: 'Seitwärts', rueckwaerts_gehen: 'Rückwärts gehen', seitwaerts_gehen: 'Seitwärts gehen', seitwaerts_laufen: 'Seitwärts laufen', humpeln: 'Humpeln', fangen: 'Fangen', fangen_flach: 'Fangen flach', fangen_hoch: 'Fangen hoch', halten: 'Ball halten', halten_gehen: 'Gehen mit Ball', sprung: 'Sprung', sprung_lauf: 'Sprung aus dem Lauf' };
 const COST_NAMES = { abrollen: 'rollt nicht ab', beine: 'Beine in der Luft', arme: 'Arme stützen nicht', knie: 'nicht übers Knie', koerper: 'Körper geht nicht mit', oberkoerper: 'Oberkörper-Neigung', ellbogen: 'Ellbogen', oberschenkel: 'Oberschenkel', armschwung: 'Armschwung', soll: 'Knie und Fuß', boden: 'im Boden', boden2: 'schwebt', rutschen: 'Fuß rutscht', stand: 'Standzeit', hub: 'Becken-Hub', glatt: 'Knicke', flug: 'Flugphase', fusshoehe: 'Fuß zu hoch', stuetze: 'kein Halt', schweben: 'schwebt', fuss: 'Fuß rutscht', abweichung: 'Abweichung' };
 
 // ---------- Anzeige
