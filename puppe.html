@@ -1,0 +1,1378 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gelenkpuppe</title>
+<style>
+:root{--bg:#f4f3ef;--panel:#fffefb;--ink:#22231f;--mute:#6d6e66;--line:#dddbd2;--acc:#2f6fb0;--accR:#c0602b;--warn:#b07a12;--bad:#b3261e;--ok:#2e7d4f;--chip:#ecebe4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171816;--panel:#20211e;--ink:#e9e8e2;--mute:#9c9c93;--line:#34352f;--acc:#6ea8e6;--accR:#e39462;--warn:#e0b04a;--bad:#ef6b62;--ok:#6cc495;--chip:#2b2c28}}
+:root[data-theme="dark"]{--bg:#171816;--panel:#20211e;--ink:#e9e8e2;--mute:#9c9c93;--line:#34352f;--acc:#6ea8e6;--accR:#e39462;--warn:#e0b04a;--bad:#ef6b62;--ok:#6cc495;--chip:#2b2c28}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13px/1.35 system-ui,"Segoe UI",sans-serif}
+#app{display:grid;grid-template-columns:400px 1fr;height:100vh}
+#side{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#side header{padding:10px 14px 6px;display:flex;align-items:baseline;gap:10px}
+#side h1{font-size:17px;margin:0}
+#srv{font-size:11px;color:var(--mute)}
+.tabs{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;color:var(--mute);padding:8px 12px;font:inherit;cursor:pointer;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--ink);border-color:var(--acc);font-weight:600}
+.tab{overflow:auto;flex:1;padding:10px 12px 40px}
+.tab[hidden]{display:none}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+button.b,select.b{font:inherit;padding:5px 9px;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:6px;cursor:pointer}
+button.b:hover{border-color:var(--acc)}
+button.b.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+label.ck{display:flex;gap:5px;align-items:center;color:var(--ink);font-size:12px}
+details.grp{border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--bg)}
+details.grp>summary{padding:7px 10px;cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between}
+details.grp>summary::after{content:"▸";color:var(--mute)}
+details.grp[open]>summary::after{content:"▾"}
+.jt{padding:4px 10px 8px;border-top:1px solid var(--line)}
+.jt.sel{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.jt h4{margin:4px 0 2px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.jt h4 small{color:var(--mute);font-weight:400}
+.jt h4 button{border:0;background:none;color:var(--mute);cursor:pointer;font-size:13px}
+.dof{display:grid;grid-template-columns:1fr 58px;gap:2px 6px;align-items:center;margin:3px 0}
+.dof .lab{grid-column:1/3;font-size:11.5px;color:var(--mute);display:flex;justify-content:space-between}
+.dof input[type=range]{width:100%;accent-color:var(--acc)}
+.dof input[type=number]{width:58px;font:inherit;padding:2px 4px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink)}
+.dof.edge .lab b{color:var(--warn)}
+.side-R input[type=range]{accent-color:var(--accR)}
+.quick{padding:6px 10px;border-top:1px dashed var(--line)}
+#view{position:relative;min-width:0}
+#view canvas{display:block;width:100%;height:100%}
+#hud{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
+#hud .b{background:color-mix(in srgb,var(--panel) 88%,transparent)}
+#hud .b.on{border-color:var(--acc);color:var(--acc);font-weight:600}
+#checks{position:absolute;top:10px;right:10px;max-width:330px;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px}
+#checks .t{font-weight:600;margin-bottom:4px}
+#checks ul{margin:0;padding-left:16px}
+#checks li.f{color:var(--bad)} #checks li.h{color:var(--warn)}
+#checks .good{color:var(--ok)}
+#legend{position:absolute;left:10px;bottom:84px;font-size:11px;color:var(--mute);background:color-mix(in srgb,var(--panel) 80%,transparent);padding:4px 8px;border-radius:6px}
+#legend i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin:0 3px 0 8px}
+#timeline{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:8px 12px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+#tlbar{position:relative;height:28px}
+#tlbar input{position:absolute;inset:0;width:100%;accent-color:var(--acc)}
+#ticks{position:absolute;left:8px;right:8px;top:0;height:8px;pointer-events:none}
+#ticks span{position:absolute;width:8px;height:8px;margin-left:-4px;background:var(--accR);transform:rotate(45deg);top:0}
+#tlinfo{font-size:12px;color:var(--mute);min-width:150px;text-align:right}
+#tlinfo b{color:var(--ink)}
+#dirty{color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:12px;font-variant-numeric:tabular-nums}
+.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:3px 4px;text-align:left;vertical-align:top}
+.tbl th{color:var(--mute);font-weight:500}
+.tbl td.n{text-align:right;white-space:nowrap}
+h3{font-size:13px;margin:14px 0 6px}
+.mute{color:var(--mute)}
+pre.json{font-size:10.5px;max-height:320px;overflow:auto;background:var(--bg);border:1px solid var(--line);padding:6px;border-radius:6px;white-space:pre-wrap;word-break:break-all}
+input.txt,textarea.txt{width:100%;font:inherit;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+textarea.txt{min-height:60px;resize:vertical}
+.files{list-style:none;padding:0;margin:0}
+.files li{display:flex;justify-content:space-between;gap:6px;align-items:center;border-bottom:1px solid var(--line);padding:5px 0}
+.files li div{min-width:0}
+.files li small{color:var(--mute);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#msg{min-height:18px;font-size:12px;margin:6px 0}
+@media (max-width:800px){#app{grid-template-columns:1fr;grid-template-rows:55vh 45vh}#side{order:2}#checks{max-width:60%}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <header><h1>Gelenkpuppe</h1><span id="srv">Server wird gesucht …</span></header>
+    <nav class="tabs">
+      <button data-tab="gelenke" class="on">Gelenke</button>
+      <button data-tab="daten">Daten</button>
+      <button data-tab="datei">Speichern / Laden</button>
+    </nav>
+    <section class="tab" id="tab-gelenke">
+      <div class="row">
+        <select class="b" id="preset" title="Vorlage laden">
+          <option value="">Vorlage …</option>
+        </select>
+        <button class="b" id="undo" title="Strg+Z">↶ Zurück</button>
+        <button class="b" id="redo" title="Strg+Y">↷ Vor</button>
+        <button class="b" id="reset">Alles auf 0</button>
+      </div>
+      <div class="row">
+        <button class="b" id="l2r">Links → Rechts</button>
+        <button class="b" id="r2l">Rechts → Links</button>
+        <button class="b" id="swap">Seiten tauschen</button>
+      </div>
+      <div class="row">
+        <label class="ck"><input type="checkbox" id="optScap" checked> Schulterblatt-Rhythmus automatisch</label>
+        <label class="ck"><input type="checkbox" id="optGround" checked> Automatisch auf den Boden</label>
+        <label class="ck"><input type="checkbox" id="optPlayer" checked> Eigenes Modell zeigen (player.glb, echte Maße, Puppe aus)</label>
+        <label class="ck"><input type="checkbox" id="optBones"> Elle und Speiche im Modell einblenden</label>
+        <label class="ck"><input type="checkbox" id="optFeet"> Füße fixieren (Becken ziehen = Kniebeuge)</label>
+      </div>
+      <div id="joints"></div>
+    </section>
+    <section class="tab" id="tab-daten" hidden>
+      <div class="row">
+        <button class="b" id="copyJson">Pose-JSON kopieren</button>
+        <span class="mute">Koordinaten wie in Blender: +X links der Figur, −Y vorn, +Z oben</span>
+      </div>
+      <div id="data"></div>
+    </section>
+    <section class="tab" id="tab-datei" hidden>
+      <h3>Name und Beschreibung</h3>
+      <input class="txt" id="docName" placeholder="z. B. torwart_hechtsprung_links">
+      <p class="mute" style="margin:4px 0 6px">Was soll die Pose oder Bewegung zeigen? Was berührt was? Das hilft mir bei der Weiterverarbeitung.</p>
+      <textarea class="txt" id="docDesc" placeholder="z. B. Hechtsprung nach links, Ball mit beiden Händen über dem Kopf, Landung auf der linken Seite"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="b pri" id="saveSrv">Auf dem PC speichern</button>
+        <button class="b" id="download">Als Datei herunterladen</button>
+        <label class="b" style="display:inline-block">Datei öffnen <input type="file" id="fileIn" accept=".json" hidden></label>
+      </div>
+      <div id="msg"></div>
+      <p class="mute">Speicherort: Ordner <code>posen/&lt;name&gt;.json</code> neben <code>puppe_server.py</code> (änderbar mit <code>--posen</code>). Wird eine Datei überschrieben, legt der Server die alte Fassung unter <code>posen/.alt</code> ab.</p>
+      <h3>Gespeicherte Posen</h3>
+      <ul class="files" id="files"><li class="mute">–</li></ul>
+      <h3>JSON einfügen</h3>
+      <textarea class="txt" id="pasteIn" placeholder="Hier einen gespeicherten Puppen-JSON-Text einfügen"></textarea>
+      <div class="row" style="margin-top:6px"><button class="b" id="pasteBtn">Übernehmen</button></div>
+    </section>
+  </aside>
+  <main id="view">
+    <div id="hud">
+      <button class="b" data-view="front">Vorne</button>
+      <button class="b" data-view="left">Seite links</button>
+      <button class="b" data-view="right">Seite rechts</button>
+      <button class="b" data-view="back">Hinten</button>
+      <button class="b" data-view="top">Oben</button>
+      <button class="b" data-view="q">Schräg</button>
+      <span style="width:10px"></span>
+      <button class="b on" id="modeRot" title="Körperteil anklicken öffnet seine Regler">Anklicken</button>
+      <button class="b" id="modeIK" title="Hand oder Fuß mit der Maus anfassen und ziehen">Ziehen</button>
+    </div>
+    <div id="checks"></div>
+    <div id="legend"><i style="background:#5b8fc7"></i>links<i style="background:#d58a5c"></i>rechts<i style="background:#e8c547"></i>Handfläche<i style="background:#f4efe2;border:1px solid #999"></i>Speiche (Elle in Armfarbe)<i style="background:#333"></i>Nase = vorn</div>
+    <div id="timeline">
+      <div class="row" style="margin:0">
+        <button class="b" id="kPrev" title="vorheriger Key">◀◆</button>
+        <button class="b" id="play">▶</button>
+        <button class="b" id="kNext" title="nächster Key">◆▶</button>
+        <button class="b pri" id="kSet">◆ Key setzen</button>
+        <button class="b" id="kDel">Key löschen</button>
+      </div>
+      <div id="tlbar"><div id="ticks"></div><input type="range" id="frame" min="0" max="60" value="0"></div>
+      <div id="tlinfo">Bild <b id="fnum">0</b> · <span id="kinfo">keine Keys</span> <span id="dirty"></span><br>
+        <label>Länge <input type="number" id="flen" value="60" min="10" max="2000" style="width:56px"></label>
+        <label>fps <input type="number" id="fps" value="30" min="1" max="120" style="width:44px"></label></div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// =====================================================================================
+// Grundlagen. Puppen-Rahmen (three.js): +X = links der Figur, +Y = oben, +Z = vorn
+// (Blickrichtung). Export in Blender-Achsen: (x, -z, y) -> +X links, -Y vorn, +Z oben.
+// =====================================================================================
+const H = 1.80;
+const DEG = Math.PI / 180;
+const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+const AX = V(1, 0, 0), AY = V(0, 1, 0), AZ = V(0, 0, 1);
+const qa = (axis, deg) => new THREE.Quaternion().setFromAxisAngle(axis.clone().normalize(), deg * DEG);
+const qm = (...qs) => qs.reduce((a, b) => a.multiply(b), new THREE.Quaternion());
+const mirrorQ = q => new THREE.Quaternion(q.x, -q.y, -q.z, q.w);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const clone = o => JSON.parse(JSON.stringify(o));
+const toB = v => [v.x, -v.z, v.y];                     // Puppe -> Blender
+const qB = q => [q.w, q.x, -q.z, q.y];                 // Quaternion in Blender-Achsen (w,x,y,z)
+const r3 = x => Math.round(x * 1000) / 1000;
+const r1 = x => Math.round(x * 10) / 10;
+
+// ---------------- Ruhe-Skelett (Anteile der Körperhöhe, linke Seite; Drillis & Contini / Winter)
+const P = {};
+const S = (k, x, y, z) => { P[k] = V(x, y, z); };
+S('Hips', 0, 0.53, 0); S('Spine', 0, 0.565, -0.01); S('Spine1', 0, 0.64, -0.012); S('Spine2', 0, 0.715, -0.01);
+S('Neck', 0, 0.815, -0.012); S('Head', 0, 0.875, -0.002); S('HeadTop', 0, 1.0, 0.004); S('Nose', 0, 0.928, 0.066);
+S('Shoulder', 0.012, 0.805, 0.02); S('Arm', 0.11, 0.80, -0.005); S('ForeArm', 0.11, 0.614, -0.005);
+S('Hand', 0.13, 0.468, -0.005);                         // Tragewinkel: Unterarm weicht ~8 Grad nach außen ab
+S('UpLeg', 0.05, 0.52, 0); S('Leg', 0.05, 0.285, 0.004); S('Foot', 0.05, 0.039, -0.004);
+S('ToeBase', 0.053, 0.01, 0.087); S('ToeTip', 0.054, 0.008, 0.117); S('Heel', 0.05, 0.008, -0.035);
+const playerRest = await fetch('player_rest.json').then(r => r.ok ? r.json() : null).catch(() => null);
+if (playerRest) {
+  const g = playerRest._boden;
+  const B = n => { const h = playerRest[n].head; return V(h[0] / H, (h[2] - g) / H, -h[1] / H); };
+  const dist = (a, b) => B(a).distanceTo(B(b));
+  const footOld = P.Foot.clone(), toe = P.ToeBase.clone().sub(footOld), tip = P.ToeTip.clone().sub(footOld), heel = P.Heel.clone().sub(footOld);
+  for (const n of ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head']) P[n] = B(n);
+  P.HeadTop = P.Head.clone().add(V(0, 0.125, 0.006)); P.Nose = P.Head.clone().add(V(0, 0.053, 0.068));
+  P.Shoulder = B('LeftShoulder'); P.Arm = B('LeftArm');
+  P.ForeArm = P.Arm.clone().add(V(0, -dist('LeftArm', 'LeftForeArm'), 0));
+  P.Hand = P.ForeArm.clone().addScaledVector(V(Math.sin(8 * DEG), -Math.cos(8 * DEG), 0), dist('LeftForeArm', 'LeftHand'));
+  P.UpLeg = B('LeftUpLeg');
+  P.Leg = P.UpLeg.clone().add(V(0, -dist('LeftUpLeg', 'LeftLeg'), 0));
+  P.Foot = P.Leg.clone().add(V(0, -dist('LeftLeg', 'LeftFoot'), 0));
+  P.ToeBase = P.Foot.clone().add(toe); P.ToeTip = P.Foot.clone().add(tip); P.Heel = P.Foot.clone().add(heel);
+}
+const dF = P.Hand.clone().sub(P.ForeArm).normalize();          // Unterarm-/Handrichtung
+const nP = V(dF.y, -dF.x, 0).normalize();                       // Handflächennormale (zur Körpermitte)
+const kF = dF.clone().cross(nP).normalize();                    // Beugeachse Handgelenk/Finger
+const kR = dF.clone().cross(AZ).normalize();                    // Kippachse zur Daumenseite
+const FING = [['Index', 0.054, 0.016, 0.046, 1, 'Zeigefinger'], ['Middle', 0.055, 0.004, 0.053, 1, 'Mittelfinger'],
+              ['Ring', 0.053, -0.007, 0.049, -1, 'Ringfinger'], ['Pinky', 0.049, -0.017, 0.039, -1, 'Kleiner Finger']];
+const SPREAD = {};
+for (const [n, m, o, l, sg] of FING) {
+  SPREAD[n] = sg;
+  const b = P.Hand.clone().addScaledVector(dF, m).addScaledVector(AZ, o);
+  P[n + '1'] = b; P[n + '2'] = b.clone().addScaledVector(dF, l * 0.48);
+  P[n + '3'] = b.clone().addScaledVector(dF, l * 0.78); P[n + 'Tip'] = b.clone().addScaledVector(dF, l);
+}
+let tD = dF.clone().multiplyScalar(0.6).addScaledVector(AZ, 0.75).addScaledVector(nP, 0.25).normalize();
+P.Thumb1 = P.Hand.clone().addScaledVector(dF, 0.012).addScaledVector(AZ, 0.014).addScaledVector(nP, 0.004);
+P.Thumb2 = P.Thumb1.clone().addScaledVector(tD, 0.024);
+P.Thumb3 = P.Thumb2.clone().addScaledVector(tD, 0.017);
+P.ThumbTip = P.Thumb3.clone().addScaledVector(tD, 0.015);
+if (playerRest) {
+  // Finger genau wie beim Spieler: seine Knochen im Rahmen der Hand (Finger- und Daumenrichtung), Lage der Hand wie in der Puppe
+  const g = playerRest._boden;
+  const conv = a => V(a[0] / H, (a[2] - g) / H, -a[1] / H);
+  const bh = n => conv(playerRest[n].head), bt = n => conv(playerRest[n].tail);
+  const hm = bh('LeftHand'), dm = bh('LeftMiddle1').sub(hm).normalize();
+  const th0 = bh('LeftThumb1').sub(hm), tm = th0.addScaledVector(dm, -th0.dot(dm)).normalize(), cm = dm.clone().cross(tm);
+  const az = AZ.clone().addScaledVector(dF, -AZ.dot(dF)).normalize(), cp = dF.clone().cross(az);
+  const map = v => { const d = v.clone().sub(hm); return P.Hand.clone().addScaledVector(dF, d.dot(dm)).addScaledVector(az, d.dot(tm)).addScaledVector(cp, d.dot(cm)); };
+  for (const n of ['Index', 'Middle', 'Ring', 'Pinky']) {
+    for (const k of [1, 2, 3]) P[n + k] = map(bh('Left' + n + k));
+    const d3 = P[n + '3'].clone().sub(P[n + '2']);
+    P[n + 'Tip'] = P[n + '3'].clone().addScaledVector(d3.normalize(), map(bt('Left' + n + '3')).distanceTo(P[n + '3']) || 0.015);
+  }
+  for (const k of [1, 2, 3]) P['Thumb' + k] = map(bh('LeftThumb' + k));
+  const d3 = P.Thumb3.clone().sub(P.Thumb2);
+  P.ThumbTip = P.Thumb3.clone().addScaledVector(d3.normalize(), map(bt('LeftThumb3')).distanceTo(P.Thumb3) || 0.015);
+  tD = P.Thumb3.clone().sub(P.Thumb1).normalize();
+}
+const kOpp = tD.clone().cross(nP).normalize();                  // Daumen zur Handfläche
+
+// ---------------- Gelenke mit anatomischen Bewegungsumfängen (Grad)
+const d = (k, l, min, max) => ({ k, l, min, max });
+const SP = (f, e, s, r) => [d('beug', 'Vorbeugen + / Rückbeugen −', -e, f), d('seit', 'Seitneigen + links / − rechts', -s, s), d('dreh', 'Drehen + nach links / − rechts', -r, r)];
+const TEMPL = [
+  ['Hips', null, 'Becken (ganzer Körper)', 'rumpf', [d('x', 'Verschieben + links / − rechts (cm)', -300, 300), d('y', 'Höhe + hoch / − runter (cm)', -120, 150),
+    d('z', 'Verschieben + vor / − zurück (cm)', -300, 300), d('vor', 'Vorneigen + / Rückneigen −', -180, 180),
+    d('seit', 'Seitkippen + links / − rechts', -180, 180), d('dreh', 'Drehen + nach links / − rechts', -180, 180)], false],
+  ['Spine', 'Hips', 'Lendenwirbelsäule', 'rumpf', SP(20, 10, 10, 5), false],
+  ['Spine1', 'Spine', 'Untere Brustwirbelsäule', 'rumpf', SP(15, 7, 8, 12), false],
+  ['Spine2', 'Spine1', 'Brustkorb', 'rumpf', SP(15, 7, 8, 15), false],
+  ['Neck', 'Spine2', 'Hals', 'kopf', SP(40, 50, 35, 50), false],
+  ['Head', 'Neck', 'Kopf', 'kopf', SP(20, 25, 10, 30), false],
+  ['Shoulder', 'Spine2', 'Schlüsselbein / Schulterblatt', 'arm', [d('heben', 'Schulter heben + / senken −', -10, 40), d('vor', 'Schulter vor + / zurück −', -20, 25)], true],
+  ['Arm', 'Shoulder', 'Schultergelenk (Oberarm)', 'arm', [d('ebene', 'Hebe-Richtung: 0 seitlich · 90 vorn · −90 hinten', -90, 135),
+    d('heben', 'Arm heben (0 hängend · 180 senkrecht)', 0, 180), d('dreh', 'Oberarm drehen + außen / − innen', -90, 90)], true],
+  ['ForeArm', 'Arm', 'Ellbogen / Elle und Speiche', 'arm', [d('beug', 'Ellbogen beugen', 0, 145), d('dreh', 'Speiche um die Elle drehen + Pronation / − Supination', -85, 80)], true],
+  ['Hand', 'ForeArm', 'Handgelenk', 'arm', [d('beug', 'Beugen + zur Handfläche / − strecken', -70, 80), d('kipp', 'Kippen + Daumenseite / − Kleinfingerseite', -30, 20)], true],
+];
+for (const [n, , , , , de] of FING) {
+  TEMPL.push([n + '1', 'Hand', de + ' Grundgelenk', 'hand', [d('beug', 'Beugen', -20, 90),
+    n === 'Middle' ? d('spreiz', 'Seitlich + zum Zeigefinger', -10, 10) : d('spreiz', 'Spreizen + / anlegen −', -10, 20)], true]);
+  TEMPL.push([n + '2', n + '1', de + ' Mittelgelenk', 'hand', [d('beug', 'Beugen', 0, 110)], true]);
+  TEMPL.push([n + '3', n + '2', de + ' Endgelenk', 'hand', [d('beug', 'Beugen', -5, 80)], true]);
+}
+TEMPL.push(['Thumb1', 'Hand', 'Daumen Sattelgelenk', 'hand', [d('gegen', 'Zur Handfläche (Opposition)', 0, 60), d('spreiz', 'Abspreizen + / anlegen −', -10, 50)], true]);
+TEMPL.push(['Thumb2', 'Thumb1', 'Daumen Grundgelenk', 'hand', [d('beug', 'Beugen', -10, 60)], true]);
+TEMPL.push(['Thumb3', 'Thumb2', 'Daumen Endgelenk', 'hand', [d('beug', 'Beugen', -10, 80)], true]);
+TEMPL.push(['UpLeg', 'Hips', 'Hüfte (Oberschenkel)', 'bein', [d('beug', 'Beugen + (Knie vor) / − strecken', -30, 120), d('spreiz', 'Abspreizen + / heranführen −', -30, 45), d('dreh', 'Drehen + außen / − innen', -40, 40)], true]);
+TEMPL.push(['Leg', 'UpLeg', 'Knie', 'bein', [d('beug', 'Knie beugen', 0, 145), d('dreh', 'Unterschenkel drehen + außen / − innen (nur gebeugt)', -30, 30)], true]);
+TEMPL.push(['Foot', 'Leg', 'Sprunggelenk', 'bein', [d('heb', 'Fußspitze heben + / senken −', -50, 30), d('kipp', 'Sohle nach innen + / außen −', -15, 35)], true]);
+TEMPL.push(['ToeBase', 'Foot', 'Zehen', 'bein', [d('heb', 'Zehen heben + / beugen −', -40, 70)], true]);
+
+const J = [], JM = {};
+for (const sideName of ['', 'Left', 'Right']) {
+  for (const [base, parent, label, grp, dofs, sided] of TEMPL) {
+    if (sided !== (sideName !== '')) continue;
+    const pid = parent == null ? null : (sided && TEMPL.find(t => t[0] === parent)[5] ? sideName + parent : parent);
+    const j = { id: sideName + base, base, side: sideName, parent: pid, label, grp, dofs };
+    J.push(j); JM[j.id] = j;
+  }
+}
+const isRight = j => j.side === 'Right';
+const sideDE = s => s === 'Left' ? 'links' : s === 'Right' ? 'rechts' : '';
+
+// ---------------- Pose-Zustand
+const neutral = () => { const o = {}; for (const j of J) { o[j.id] = {}; for (const f of j.dofs) o[j.id][f.k] = 0; } return o; };
+let pose = { j: neutral() };
+const opts = { scap: true, ground: true, feet: false };
+
+const maxElev = pl => pl >= 0 ? (pl <= 90 ? 180 : 180 - (pl - 90) / 45 * 50) : Math.max(60, 180 + pl / 90 * 120);
+const scapAuto = elev => opts.scap ? clamp((elev - 30) / 3, 0, 25) : 0;
+function lim(j, f) {
+  if (j.base === 'Arm' && f.k === 'heben') return [0, maxElev(pose.j[j.id].ebene)];
+  if (j.base === 'Leg' && f.k === 'dreh') { const m = 30 * Math.min(1, pose.j[j.id].beug / 90); return [-m, m]; }
+  return [f.min, f.max];
+}
+function clampJ(id) {
+  const j = JM[id], a = pose.j[id];
+  for (const f of j.dofs) { const [lo, hi] = lim(j, f); a[f.k] = clamp(+a[f.k] || 0, lo, hi); }
+}
+const clampAll = () => J.forEach(j => clampJ(j.id));
+
+// ---------------- lokale Drehung je Gelenk (Vorlage = linke Seite; rechts gespiegelt)
+function clavQ(side, withAuto) {
+  const c = pose.j[side + 'Shoulder'], arm = pose.j[side + 'Arm'];
+  return qm(qa(AZ, c.heben + (withAuto ? scapAuto(arm.heben) : 0)), qa(AY, -c.vor));
+}
+function armQ(a) {           // Oberarm relativ zum Brustkorb (Hebe-Ebene, Hebung, Längsdrehung; ISB-ähnlich)
+  const ph = a.ebene * DEG;
+  return qm(qa(V(-Math.sin(ph), 0, Math.cos(ph)), a.heben), qa(AY, a.dreh));
+}
+function templQ(j, rig) {
+  const a = pose.j[j.id];
+  switch (j.base) {
+    case 'Hips': return qm(qa(AY, a.dreh), qa(AX, a.vor), qa(AZ, -a.seit));
+    case 'Spine': case 'Spine1': case 'Spine2': case 'Neck': case 'Head':
+      return qm(qa(AX, a.beug), qa(AZ, -a.seit), qa(AY, a.dreh));
+    case 'Shoulder': return clavQ(j.side, !rig);
+    case 'Arm': return clavQ(j.side, !rig).invert().multiply(armQ(a));
+    case 'ForeArm': return qm(qa(AX, -a.beug), qa(dF, a.dreh));
+    case 'Hand': return qm(qa(kF, a.beug), qa(kR, a.kipp));
+    case 'Thumb1': return qm(qa(kOpp, a.gegen), qa(nP, a.spreiz));
+    case 'Thumb2': case 'Thumb3': return qa(kOpp, a.beug);
+    case 'UpLeg': return qm(qa(AX, -a.beug), qa(AZ, a.spreiz), qa(AY, a.dreh));
+    case 'Leg': return qm(qa(AX, a.beug), qa(AY, a.dreh));
+    case 'Foot': return qm(qa(AX, -a.heb), qa(AZ, -a.kipp));
+    case 'ToeBase': return qa(AX, -a.heb);
+    default:
+      if (j.base.endsWith('1')) return qm(qa(kF, a.beug), qa(kR, SPREAD[j.base.slice(0, -1)] * a.spreiz));
+      return qa(kF, a.beug);
+  }
+}
+const localQ = (j, rig = false) => { const q = templQ(j, rig); return isRight(j) ? mirrorQ(q) : q; };
+const restPos = (key, side) => { const p = P[key].clone(); if (side === 'Right') p.x = -p.x; return p.multiplyScalar(H); };
+
+// =====================================================================================
+// Szene
+// =====================================================================================
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.shadowMap.enabled = true;
+view.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 100);
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.target.set(0, 0.95, 0);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8577, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(2.5, 5, 3.5); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3 });
+scene.add(sun);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.18 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const grid = new THREE.GridHelper(10, 40, 0x999999, 0xcccccc); grid.material.transparent = true; grid.material.opacity = 0.45; scene.add(grid);
+// Pfeil "vorn" am Boden
+const arrow = new THREE.ArrowHelper(AZ, V(0, 0.002, 0.25), 0.25, 0x555555, 0.07, 0.05); scene.add(arrow);
+
+function themeColors() {
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light';
+  scene.background = new THREE.Color(dark ? 0x1d1e1b : 0xe9e7e0);
+  grid.material.color = new THREE.Color(dark ? 0x3a3b36 : 0xbdbab0);
+}
+themeColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', themeColors);
+
+const COL = { '': 0xd9d2c3, Left: 0x5b8fc7, Right: 0xd58a5c };
+const groups = {}, markers = {}, meshesOf = {}, solids = [], torso = {};
+const forearmBones = {};
+const figure = new THREE.Group(); scene.add(figure);
+for (const j of J) {
+  const g = new THREE.Group(); g.name = j.id; groups[j.id] = g; meshesOf[j.id] = [];
+  if (!j.parent) { figure.add(g); g.position.copy(restPos('Hips', '')); }
+  else { groups[j.parent].add(g); g.position.copy(restPos(j.base, j.side).sub(restPos(JM[j.parent].base, j.side))); }
+}
+function mat(side, color) { return new THREE.MeshStandardMaterial({ color: color ?? COL[side], roughness: 0.75, metalness: 0 }); }
+function local(id, key) { const j = JM[id]; return restPos(key, j.side).sub(restPos(j.base, j.side)); }
+function addMesh(id, mesh, solid = true) {
+  mesh.userData.joint = id; mesh.castShadow = true; groups[id].add(mesh); meshesOf[id].push(mesh);
+  if (solid) solids.push(mesh);
+  return mesh;
+}
+function capsule(id, a, b, r, color) {        // a,b: Schlüssel der Ruhepunkte
+  const pa = local(id, a), pb = local(id, b), dir = pb.clone().sub(pa), len = dir.length();
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r * H, Math.max(0.001, len), 6, 14), mat(JM[id].side, color));
+  m.position.copy(pa.clone().add(pb).multiplyScalar(0.5));
+  m.quaternion.setFromUnitVectors(AY, dir.normalize());
+  m.userData.cap = { a, b, r: r * H };
+  return addMesh(id, m);
+}
+function ellipsoid(id, c, rx, ry, rz, color) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), mat(JM[id].side, color));
+  m.position.copy(V(...c).multiplyScalar(H).sub(restPos(JM[id].base, JM[id].side)));
+  m.scale.set(rx * H, ry * H, rz * H);
+  return addMesh(id, m);
+}
+function box(id, center, size, dir, color, solid = true) {     // center: Vector3 (H-Anteile, linke Seite); dir: Längsrichtung (-Y der Box)
+  const j = JM[id], c = center.clone(); if (isRight(j)) c.x = -c.x;
+  const m = new THREE.Mesh(new THREE.BoxGeometry(size[0] * H, size[1] * H, size[2] * H), mat(j.side, color));
+  m.position.copy(c.multiplyScalar(H).sub(restPos(j.base, j.side)));
+  if (dir) { const dd = dir.clone(); if (isRight(j)) dd.x = -dd.x; m.quaternion.setFromUnitVectors(V(0, -1, 0), dd.normalize()); }
+  return addMesh(id, m, solid);
+}
+function marker(id, key, name) {
+  const o = new THREE.Object3D(); o.position.copy(local(id, key)); groups[id].add(o); markers[name] = o;
+}
+// Rumpf und Kopf
+torso.Hips = ellipsoid('Hips', [0, 0.525, -0.005], 0.088, 0.055, 0.065);
+torso.Spine = ellipsoid('Spine', [0, 0.60, 0.002], 0.076, 0.058, 0.058);
+torso.Spine1 = ellipsoid('Spine1', [0, 0.672, 0.004], 0.079, 0.06, 0.06);
+torso.Spine2 = ellipsoid('Spine2', [0, 0.762, 0.0], 0.086, 0.074, 0.066);
+capsule('Neck', 'Neck', 'Head', 0.027);
+torso.Head = ellipsoid('Head', [0, 0.935, 0.008], 0.05, 0.066, 0.058);
+{
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.009 * H, 0.03 * H, 12), mat('', 0x333333));
+  nose.position.copy(local('Head', 'Nose')); nose.rotation.x = Math.PI / 2; addMesh('Head', nose, false);
+  for (const sx of [1, -1]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.0065 * H, 10, 8), mat('', 0x222222));
+    eye.position.copy(V(sx * 0.019, 0.948, 0.053).multiplyScalar(H).sub(restPos('Head', ''))); addMesh('Head', eye, false);
+  }
+}
+marker('Head', 'HeadTop', 'HeadTop'); marker('Head', 'Nose', 'Nose');
+for (const s of ['Left', 'Right']) {
+  capsule(s + 'Shoulder', 'Shoulder', 'Arm', 0.011);
+  capsule(s + 'Arm', 'Arm', 'ForeArm', 0.021);
+  // Bleibt fuer Bodenmessung und Anklicken, ist aber unsichtbar: zu sehen sind Elle und Speiche
+  { const c = capsule(s + 'ForeArm', 'ForeArm', 'Hand', 0.017); c.visible = false; c.castShadow = false; }
+  forearmBones[s] = {
+    elle: addMesh(s + 'ForeArm', new THREE.Mesh(new THREE.CylinderGeometry(0.0028 * H, 0.0042 * H, 1, 12), mat(s)), false),
+    speiche: addMesh(s + 'ForeArm', new THREE.Mesh(new THREE.CylinderGeometry(0.0046 * H, 0.003 * H, 1, 12), mat(s, 0xf4efe2)), false),
+  };
+  const palmC = P.Hand.clone().addScaledVector(dF, 0.028);
+  box(s + 'Hand', palmC, [0.013, 0.05, 0.045], dF);
+  box(s + 'Hand', palmC.clone().addScaledVector(nP, 0.0068), [0.0016, 0.044, 0.04], dF, 0xe8c547, false);   // Handfläche
+  for (const [n] of FING) {
+    const r = n === 'Pinky' ? 0.0042 : 0.0048;
+    capsule(s + n + '1', n + '1', n + '2', r); capsule(s + n + '2', n + '2', n + '3', r); capsule(s + n + '3', n + '3', n + 'Tip', r * 0.92);
+    marker(s + n + '3', n + 'Tip', s + n + 'Tip');
+  }
+  capsule(s + 'Thumb1', 'Thumb1', 'Thumb2', 0.0062); capsule(s + 'Thumb2', 'Thumb2', 'Thumb3', 0.0056); capsule(s + 'Thumb3', 'Thumb3', 'ThumbTip', 0.0052);
+  marker(s + 'Thumb3', 'ThumbTip', s + 'ThumbTip');
+  capsule(s + 'UpLeg', 'UpLeg', 'Leg', 0.036);
+  capsule(s + 'Leg', 'Leg', 'Foot', 0.026);
+  box(s + 'Foot', V(0.05, 0.02, 0.026), [0.052, 0.04, 0.122]);
+  box(s + 'ToeBase', V(0.054, 0.009, 0.102), [0.05, 0.018, 0.03]);
+  marker(s + 'ToeBase', 'ToeTip', s + 'ToeTip'); marker(s + 'Foot', 'Heel', s + 'Heel');
+}
+// Gelenkpunkte (zum Anklicken)
+const dotGeo = new THREE.SphereGeometry(0.0075 * H, 10, 8);
+for (const j of J) {
+  const r = j.grp === 'hand' ? 0.45 : 1;
+  const m = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: 0x2b2b2b }));
+  m.scale.setScalar(r); addMesh(j.id, m, false); m.castShadow = false;
+}
+
+// Unterarm: Die Elle steht fest zum Oberarm, nur die Speiche dreht um sie herum. Neutral (Daumen vorn) liegen beide
+// nebeneinander; Pronation laesst die Speiche ueber die Elle kreuzen, Supination legt sie parallel.
+function placeBone(m, a, b) {
+  const d = b.clone().sub(a), len = d.length();
+  m.position.copy(a.clone().add(b).multiplyScalar(0.5));
+  m.scale.set(1, len, 1);
+  m.quaternion.setFromUnitVectors(AY, d.normalize());
+}
+function placeForearmBones() {
+  for (const side of ['Left', 'Right']) {
+    const sg = side === 'Right' ? -1 : 1, b = forearmBones[side];
+    const len = restPos('Hand', side).sub(restPos('ForeArm', side));
+    let tw = qa(dF, pose.j[side + 'ForeArm'].dreh); if (sg < 0) tw = mirrorQ(tw);
+    const fixed = tw.clone().invert();                                     // zurueck in den Rahmen des Ellbogens
+    const o = (x, z) => V(sg * x * H, 0, z * H);
+    placeBone(b.elle, o(-0.0055, -0.002).applyQuaternion(fixed), len.clone().add(o(-0.002, -0.0078)).applyQuaternion(fixed));
+    placeBone(b.speiche, o(0.0055, 0.001).applyQuaternion(fixed), len.clone().add(o(0.002, 0.0078)));
+  }
+}
+
+// ---------------- Der echte Spieler folgt den Gelenken der Puppe
+const player = { bones: null, root: null, off: {}, shown: true };
+const mannequin = () => Object.values(meshesOf).flat().filter(m => m.visible !== undefined && !m.userData.keep);
+function showPlayer(on) {
+  player.shown = on; if (player.root) player.root.visible = on;
+  for (const m of mannequin()) if (m.userData.cap || m.geometry?.type !== 'SphereGeometry' || m.scale.x !== 1 || m.userData.body) m.visible = !on && !m.userData.alwaysHidden;
+  // Elle und Speiche: im Spieler nur auf Wunsch (dann davor gezeichnet), bei der Puppe immer
+  const see = !on || document.getElementById('optBones')?.checked;
+  for (const j of J) for (const m of meshesOf[j.id]) if (m.userData.armBone) { m.visible = !!see; m.material.depthTest = !on; m.renderOrder = on ? 8 : 0; m.material.needsUpdate = true; }
+  for (const j of J) for (const m of meshesOf[j.id]) if (m.geometry === dotGeo && j.grp !== 'hand') m.visible = !on;
+}
+function drivePlayer() {
+  if (!player.bones || !player.shown) return;
+  figure.updateMatrixWorld(true);
+  const q = new THREE.Quaternion(), pq = new THREE.Quaternion();
+  for (const j of J) {
+    const b = player.bones[j.id]; if (!b || !player.off[j.id]) continue;
+    groups[j.id].getWorldQuaternion(q);
+    if (j.base === 'ForeArm') {
+      let tw = qa(dF, pose.j[j.id].dreh); if (j.side === 'Right') tw = mirrorQ(tw);
+      const twist = player.bones[j.side + 'ForeArmTwist'];
+      if (twist) {
+        const full = q.clone().multiply(player.off[j.side + 'ForeArmTwist']);
+        q.multiply(tw.clone().invert()).multiply(player.off[j.id]);
+        b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(q)); b.updateWorldMatrix(false, false);
+        b.getWorldQuaternion(pq); twist.quaternion.copy(pq.invert().multiply(full)); twist.updateWorldMatrix(false, false);
+        continue;
+      }
+    }
+    if (j.base.startsWith('Thumb')) {
+      // Im Modell ist die Handflaeche an den Daumenknochen gebunden: Dreht er voll mit, reisst sie auf.
+      // Der Spieler zeigt deshalb nur ein Viertel, die Winkel der Puppe bleiben davon unberuehrt.
+      const t1 = pose.j[j.side + 'Thumb1'], F = 0.25;
+      let part = qm(qa(kOpp, t1.gegen * F), qa(nP, t1.spreiz * F));
+      if (j.base !== 'Thumb1') part = part.clone().multiply(qa(kOpp, pose.j[j.side + 'Thumb2'].beug * F));
+      if (j.base === 'Thumb3') part = part.clone().multiply(qa(kOpp, pose.j[j.side + 'Thumb3'].beug * F));
+      groups[j.side + 'Hand'].getWorldQuaternion(q);
+      q.multiply(j.side === 'Right' ? mirrorQ(part) : part);
+    }
+    q.multiply(player.off[j.id]);
+    b.parent.getWorldQuaternion(pq);
+    b.quaternion.copy(pq.invert().multiply(q));
+    if (j.id === 'Hips') { const w = wpos('Hips'); b.parent.worldToLocal(w); b.position.copy(w); }
+    b.updateWorldMatrix(false, false);
+  }
+  player.root.updateMatrixWorld(true);
+}
+new GLTFLoader().load('player.glb', gltf => {
+  const root = gltf.scene, bones = {};
+  root.traverse(o => { if (o.isBone) bones[o.name] = o; if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; o.raycast = () => {};
+    const n = (o.material?.name || '').toLowerCase();
+    if (o.material && !n.startsWith('hair')) { o.material.transparent = false; o.material.opacity = 1; o.material.depthWrite = true; o.material.alphaTest = 0; }
+    if (n.startsWith('number') || n.startsWith('name')) o.visible = false;   // Rueckennummer braucht die Textur aus dem Spiel
+    if (n.startsWith('kit')) o.material.color.set(0xc8102e); else if (n.startsWith('trim')) o.material.color.set(0xffffff); else if (n.startsWith('hair')) o.material.color.set(0x2a211b); } });
+  scene.add(root); root.updateMatrixWorld(true);
+  player.bind = {}; player.order = [];
+  root.traverse(o => { if (o.isBone) { player.order.push(o.name); player.bind[o.name] = o.getWorldQuaternion(new THREE.Quaternion()); } });
+  // Ruhepose der Puppe am Spieler herstellen (Arme haengend statt A-Pose, Daumen vorn), dann die Differenz merken
+  const keep = clone(pose.j); pose.j = neutral(); applyPose();
+  const aim = (name, child, from, to) => {
+    const b = bones[name], c = bones[child]; if (!b || !c) return;
+    const cur = c.getWorldPosition(V()).sub(b.getWorldPosition(V())).normalize();
+    const tgt = wpos(to).sub(wpos(from)).normalize();
+    const w = b.getWorldQuaternion(new THREE.Quaternion()), turn = new THREE.Quaternion().setFromUnitVectors(cur, tgt);
+    const pq = b.parent.getWorldQuaternion(new THREE.Quaternion());
+    b.quaternion.copy(pq.invert().multiply(turn.multiply(w))); root.updateMatrixWorld(true);
+  };
+  const hipsB = bones.Hips, hw = wpos('Hips'); hipsB.parent.worldToLocal(hw); hipsB.position.copy(hw); root.updateMatrixWorld(true);
+  for (const s of ['Left', 'Right']) {
+    aim(s + 'UpLeg', s + 'Leg', s + 'UpLeg', s + 'Leg'); aim(s + 'Leg', s + 'Foot', s + 'Leg', s + 'Foot');
+    aim(s + 'Arm', s + 'ForeArm', s + 'Arm', s + 'ForeArm'); aim(s + 'ForeArm', s + 'Hand', s + 'ForeArm', s + 'Hand');
+    // Speiche: Im Modell zeigt die Handflaeche nach unten, die Puppe hat den Daumen vorn
+    const hand = bones[s + 'Hand'], twist = bones[s + 'ForeArmTwist'], thumb = bones[s + 'Thumb1'], fore = bones[s + 'ForeArm'];
+    if (hand && twist && thumb) {
+      const axis = hand.getWorldPosition(V()).sub(fore.getWorldPosition(V())).normalize();
+      const th = thumb.getWorldPosition(V()).sub(hand.getWorldPosition(V())); th.addScaledVector(axis, -th.dot(axis)).normalize();
+      const front = AZ.clone().addScaledVector(axis, -AZ.dot(axis)).normalize();
+      const ang = Math.atan2(th.clone().cross(front).dot(axis), th.dot(front));
+      const w = twist.getWorldQuaternion(new THREE.Quaternion()), turn = new THREE.Quaternion().setFromAxisAngle(axis, ang);
+      const pq = twist.parent.getWorldQuaternion(new THREE.Quaternion());
+      twist.quaternion.copy(pq.invert().multiply(turn.multiply(w))); root.updateMatrixWorld(true);
+    }
+    aim(s + 'Hand', s + 'Middle1', s + 'Hand', s + 'Middle1');
+  }
+  for (const n in bones) player.off[n] = bones[n].getWorldQuaternion(new THREE.Quaternion());
+  player.bones = bones; player.root = root;
+  pose.j = keep; applyPose();
+  markMannequin(); showPlayer(player.shown); drivePlayer();
+  const box = document.getElementById('optPlayer'); if (box) box.onchange = () => { showPlayer(box.checked); drivePlayer(); };
+  const bo = document.getElementById('optBones'); if (bo) bo.onchange = () => showPlayer(player.shown);
+}, undefined, e => {
+  // Ohne eigenes Modell (player.glb) arbeitet die Puppe allein; der Schalter wird abgeschaltet
+  console.info('Kein player.glb: nur die Puppe wird gezeigt', e);
+  const box = document.getElementById('optPlayer'); if (box) { box.checked = false; box.disabled = true; box.parentElement.title = 'Kein Modell geladen: player.glb neben puppe.html legen (siehe README)'; }
+  const bo = document.getElementById('optBones'); if (bo) bo.disabled = true;
+});
+function markMannequin() {
+  for (const j of J) for (const m of meshesOf[j.id]) {
+    if (m.geometry === dotGeo) { if (j.grp === 'hand') m.userData.body = true; else m.userData.keep = true; continue; }
+    if (j.base === 'ForeArm' && !m.userData.cap) { m.userData.keep = true; m.userData.armBone = true; continue; }
+    if (j.base === 'ForeArm') m.userData.alwaysHidden = true;
+    m.userData.body = true;
+  }
+}
+
+// ---------------- Pose anwenden
+function applyPose() {
+  const h = pose.j.Hips;
+  groups.Hips.position.copy(restPos('Hips', '')).add(V(h.x / 100, h.y / 100, h.z / 100));
+  for (const j of J) groups[j.id].quaternion.copy(localQ(j));
+  placeForearmBones();
+  figure.updateMatrixWorld(true);
+  drivePlayer();
+}
+const wpos = id => groups[id].getWorldPosition(V());
+const mpos = n => markers[n].getWorldPosition(V());
+
+// tiefster Punkt und Bodenkontakt aus den echten Körperflächen
+const _v = V();
+function measureGround() {
+  let minY = Infinity, minId = null; const pts = [], touch = new Set();
+  for (const m of solids) {
+    const pos = m.geometry.attributes.position, mw = m.matrixWorld; let mMin = Infinity;
+    for (let i = 0; i < pos.count; i++) {
+      _v.fromBufferAttribute(pos, i).applyMatrix4(mw);
+      if (_v.y < mMin) mMin = _v.y;
+      if (_v.y < minY) { minY = _v.y; minId = m.userData.joint; }
+      if (_v.y < 0.012 && i % 2 === 0) pts.push([_v.x, _v.z, _v.y]);
+    }
+    if (mMin < 0.012) touch.add(m.userData.joint);
+  }
+  return { minY, minId, pts, touch };
+}
+function groundIt() {
+  if (!opts.ground || opts.feet) return;
+  const g = measureGround();
+  if (Math.abs(g.minY) > 0.0005) { pose.j.Hips.y = r1(pose.j.Hips.y - g.minY * 100); applyPose(); }
+}
+
+// =====================================================================================
+// IK (Hand/Fuß an ein Ziel): gedämpfte kleinste Quadrate über die anatomischen Winkel,
+// Längsdrehung (Ellbogen-/Kniestellung) bleibt, Grenzen gelten in jedem Schritt.
+// =====================================================================================
+function solve3(A, b) {
+  const [a, bb, c] = A[0], [dd, e, f] = A[1], [g, h, i] = A[2];
+  const det = a * (e * i - f * h) - bb * (dd * i - f * g) + c * (dd * h - e * g);
+  if (Math.abs(det) < 1e-18) return [0, 0, 0];
+  const inv = [[e * i - f * h, c * h - bb * i, bb * f - c * e], [f * g - dd * i, a * i - c * g, c * dd - a * f], [dd * h - e * g, bb * g - a * h, a * e - bb * dd]];
+  return inv.map(r => (r[0] * b[0] + r[1] * b[1] + r[2] * b[2]) / det);
+}
+function solveIK(side, limb, target) {
+  const prm = limb === 'arm' ? [[side + 'Arm', 'ebene'], [side + 'Arm', 'heben'], [side + 'ForeArm', 'beug']]
+                             : [[side + 'UpLeg', 'beug'], [side + 'UpLeg', 'spreiz'], [side + 'Leg', 'beug']];
+  const eff = limb === 'arm' ? side + 'Hand' : side + 'Foot';
+  const get = () => prm.map(([id, k]) => pose.j[id][k]);
+  const set = v => { prm.forEach(([id, k], i) => { pose.j[id][k] = v[i]; }); clampJ(prm[0][0]); clampJ(prm[2][0]); };
+  const pos = () => { applyPose(); return wpos(eff); };
+  if (limb === 'arm' && pose.j[side + 'Arm'].heben < 15) {
+    const th = groups.Spine2, sh = th.worldToLocal(wpos(side + 'Arm')), tg = th.worldToLocal(target.clone()).sub(sh);
+    const x = side === 'Right' ? -tg.x : tg.x;
+    if (Math.hypot(x, tg.z) > 0.05) { pose.j[side + 'Arm'].ebene = clamp(Math.atan2(tg.z, x) / DEG, -90, 135); pose.j[side + 'Arm'].heben = 25; }
+  }
+  const lam2 = 0.0015 ** 2;
+  for (let it = 0; it < 60; it++) {
+    const p0 = pos(), e = target.clone().sub(p0);
+    if (e.length() < 0.002) break;
+    const v0 = get(), cols = [];
+    for (let i = 0; i < 3; i++) { const v = v0.slice(); v[i] += 0.5; set(v); cols.push(pos().sub(p0).divideScalar(0.5)); set(v0); }
+    const Jm = [[cols[0].x, cols[1].x, cols[2].x], [cols[0].y, cols[1].y, cols[2].y], [cols[0].z, cols[1].z, cols[2].z]];
+    const JJt = [0, 1, 2].map(r => [0, 1, 2].map(c => Jm[r][0] * Jm[c][0] + Jm[r][1] * Jm[c][1] + Jm[r][2] * Jm[c][2] + (r === c ? lam2 : 0)));
+    const y = solve3(JJt, [e.x, e.y, e.z]);
+    const dq = [0, 1, 2].map(c => clamp(Jm[0][c] * y[0] + Jm[1][c] * y[1] + Jm[2][c] * y[2], -15, 15));
+    set(v0.map((v, i) => v + dq[i]));
+  }
+  for (const [id] of prm) for (const f of JM[id].dofs) pose.j[id][f.k] = r1(pose.j[id][f.k]);
+  applyPose();
+}
+let feetTargets = null;
+const storeFeet = () => { feetTargets = { Left: wpos('LeftFoot'), Right: wpos('RightFoot') }; };
+function holdFeet() { if (opts.feet && feetTargets) { solveIK('Left', 'leg', feetTargets.Left); solveIK('Right', 'leg', feetTargets.Right); } }
+
+// =====================================================================================
+// Auswertung: Positionen, Drehungen, Schwerpunkt, Bodenkontakt, Prüfung
+// =====================================================================================
+function segDist(p1, q1, p2, q2) {
+  const d1 = q1.clone().sub(p1), d2 = q2.clone().sub(p2), r = p1.clone().sub(p2);
+  const a = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r), c = d1.dot(r), b = d1.dot(d2), den = a * e - b * b;
+  let s = den > 1e-9 ? clamp((b * f - c * e) / den, 0, 1) : 0, t = (b * s + f) / e;
+  if (t < 0) { t = 0; s = clamp(-c / a, 0, 1); } else if (t > 1) { t = 1; s = clamp((b - c) / a, 0, 1); }
+  return p1.clone().addScaledVector(d1, s).distanceTo(p2.clone().addScaledVector(d2, t));
+}
+function hull(pts) {
+  const p = pts.map(q => [q[0], q[1]]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return p;
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+  for (const q of p.slice().reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+function distOutside(poly, x, z) {
+  if (poly.length === 0) return Infinity;
+  if (poly.length < 3) return Math.min(...poly.map(p => Math.hypot(p[0] - x, p[1] - z)));
+  let inside = true, best = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    if ((b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (x - a[0]) < 0) inside = false;
+    const dx = b[0] - a[0], dz = b[1] - a[1], t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / (dx * dx + dz * dz || 1), 0, 1);
+    best = Math.min(best, Math.hypot(a[0] + dx * t - x, a[1] + dz * t - z));
+  }
+  return inside ? 0 : best;
+}
+const inEllipsoid = (mesh, p) => mesh.worldToLocal(p.clone()).length();
+const label = id => { const j = JM[id]; return j.label + (j.side ? ' ' + sideDE(j.side) : ''); };
+
+function analyze() {
+  const pos = {};
+  for (const j of J) pos[j.id] = wpos(j.id);
+  for (const n in markers) pos[n] = mpos(n);
+  const qL = {}, qR = {}, aa = {};
+  for (const j of J) {
+    const q = localQ(j), qr = localQ(j, true);
+    qL[j.id] = qB(q).map(x => Math.round(x * 1e4) / 1e4);
+    qR[j.id] = qB(qr).map(x => Math.round(x * 1e4) / 1e4);
+    const ang = 2 * Math.acos(clamp(Math.abs(q.w), 0, 1)) / DEG, s = Math.sqrt(Math.max(0, 1 - q.w * q.w)) || 1, sg = q.w < 0 ? -1 : 1;
+    aa[j.id] = { achse: toB(V(q.x / s * sg, q.y / s * sg, q.z / s * sg)).map(r3), grad: r1(ang) };
+  }
+  // Schwerpunkt (Dempster/Winter)
+  const cm = V(); let msum = 0;
+  const add = (p, m) => { cm.addScaledVector(p, m); msum += m; };
+  add(torso.Head.getWorldPosition(V()), 8.1); add(torso.Spine2.getWorldPosition(V()), 21.6);
+  add(torso.Spine.getWorldPosition(V()).add(torso.Spine1.getWorldPosition(V())).multiplyScalar(0.5), 13.9);
+  add(torso.Hips.getWorldPosition(V()), 14.2);
+  for (const s of ['Left', 'Right']) {
+    add(pos[s + 'Arm'].clone().lerp(pos[s + 'ForeArm'], 0.436), 2.8); add(pos[s + 'ForeArm'].clone().lerp(pos[s + 'Hand'], 0.43), 1.6);
+    add(pos[s + 'Hand'].clone().lerp(pos[s + 'Middle1'], 0.9), 0.6); add(pos[s + 'UpLeg'].clone().lerp(pos[s + 'Leg'], 0.433), 10);
+    add(pos[s + 'Leg'].clone().lerp(pos[s + 'Foot'], 0.433), 4.65); add(pos[s + 'Heel'].clone().lerp(pos[s + 'ToeTip'], 0.5), 1.45);
+  }
+  cm.divideScalar(msum);
+  const g = measureGround();
+  const poly = hull(g.pts);
+  const out = distOutside(poly, cm.x, cm.z);
+  // Hände: Richtungen für aim_hand (Finger, Daumen, Handfläche) und Ellbogen-Pol für reach
+  const hands = {}, limbs = {};
+  for (const s of ['Left', 'Right']) {
+    const hq = groups[s + 'Hand'].getWorldQuaternion(new THREE.Quaternion());
+    const n = nP.clone(); if (s === 'Right') n.x = -n.x;
+    const fing = pos[s + 'Middle1'].clone().sub(pos[s + 'Hand']).normalize();
+    const th = pos[s + 'ThumbTip'].clone().sub(pos[s + 'Thumb1']).normalize();
+    hands[s] = { finger_richtung: toB(fing).map(r3), daumen_richtung: toB(th).map(r3), handflaeche_richtung: toB(n.applyQuaternion(hq)).map(r3) };
+    const sh = pos[s + 'Arm'], el = pos[s + 'ForeArm'], wr = pos[s + 'Hand'];
+    const ax = wr.clone().sub(sh).normalize(), pole = el.clone().sub(sh); pole.addScaledVector(ax, -pole.dot(ax));
+    const hp = pos[s + 'UpLeg'], kn = pos[s + 'Leg'], an = pos[s + 'Foot'];
+    const ax2 = an.clone().sub(hp).normalize(), pole2 = kn.clone().sub(hp); pole2.addScaledVector(ax2, -pole2.dot(ax2));
+    limbs[s] = { handgelenk_m: toB(wr).map(r3), ellbogen_richtung: toB(pole.normalize()).map(r3),
+                 knoechel_m: toB(an).map(r3), knie_richtung: toB(pole2.normalize()).map(r3),
+                 arm_hebung_gesamt_grad: r1(Math.acos(clamp(el.clone().sub(sh).normalize().dot(groups.Spine2.localToWorld(V(0, -1, 0)).sub(groups.Spine2.getWorldPosition(V())).normalize()), -1, 1)) / DEG),
+                 schulterblatt_auto_grad: r1(scapAuto(pose.j[s + 'Arm'].heben)) };
+  }
+  // Prüfung
+  const F = [];
+  if (g.minY < -0.008) F.push(['f', `Im Boden: ${label(g.minId)} ${r1(-g.minY * 100)} cm unter dem Boden`]);
+  for (const s of ['Left', 'Right']) {
+    const pts = [['Handgelenk', pos[s + 'Hand']], ['Hand', pos[s + 'Middle1']], ['Fingerspitze', pos[s + 'MiddleTip']],
+                 ['Unterarm', pos[s + 'ForeArm'].clone().lerp(pos[s + 'Hand'], 0.5)], ['Ellbogen', pos[s + 'ForeArm']]];
+    for (const [nm, p] of pts) for (const t of ['Hips', 'Spine', 'Spine1', 'Spine2', 'Head']) {
+      const r = inEllipsoid(torso[t], p);
+      if (r < 0.92) { F.push(['f', `${nm} ${sideDE(s)} steckt in ${JM[t].label === 'Kopf' ? 'Kopf' : 'Rumpf (' + JM[t].label + ')'}`]); break; }
+    }
+  }
+  const legSeg = (s, a, b, r) => [pos[s + a], pos[s + b], r * H];
+  const lsegs = [['Oberschenkel', 'UpLeg', 'Leg', 0.036], ['Unterschenkel', 'Leg', 'Foot', 0.026]];
+  for (const [na, a1, a2, ra] of lsegs) for (const [nb, b1, b2, rb] of lsegs) {
+    const [p1, q1, r1_] = legSeg('Left', a1, a2, ra), [p2, q2, r2_] = legSeg('Right', b1, b2, rb);
+    if (segDist(p1, q1, p2, q2) < r1_ + r2_ - 0.012) F.push(['f', `Beine durchdringen sich: ${na} links / ${nb} rechts`]);
+  }
+  for (const s of ['Left', 'Right']) {
+    if (pose.j[s + 'UpLeg'].beug > 90 && pose.j[s + 'Leg'].beug < 20) F.push(['h', `Bein ${sideDE(s)} gestreckt über 90° gehoben – schaffen nur sehr Bewegliche (Oberschenkelrückseite)`]);
+    if (!opts.scap && pose.j[s + 'Arm'].heben > 120) F.push(['h', `Arm ${sideDE(s)} hoch ohne Schulterblatt-Rhythmus – wirkt ausgekugelt`]);
+  }
+  for (const j of J) for (const f of j.dofs) {
+    if (j.id === 'Hips') continue;
+    const [lo, hi] = lim(j, f), v = pose.j[j.id][f.k];
+    if ((Math.abs(v - hi) < 0.25 && hi !== 0) || (Math.abs(v - lo) < 0.25 && lo !== 0)) F.push(['h', `Am Anschlag: ${label(j.id)} – ${f.l.split(' ')[0]} ${r1(v)}°`]);
+  }
+  if (g.touch.size === 0) F.push(['h', `Kein Bodenkontakt (schwebt ${r1(g.minY * 100)} cm) – ok bei Sprung/Flug`]);
+  else if (out > 0.02) F.push(['h', `Schwerpunkt ${r1(out * 100)} cm außerhalb der Stützfläche – Figur würde kippen (ok mitten in einer Bewegung)`]);
+  return {
+    gelenk_positionen_m: Object.fromEntries(Object.entries(pos).map(([k, v]) => [k, toB(v).map(r3)])),
+    quat_lokal: qL, quat_rig: qR, achse_winkel_lokal: aa,
+    schwerpunkt_m: toB(cm).map(r3), schwerpunkt_ausserhalb_cm: out === Infinity ? null : r1(out * 100),
+    tiefster_punkt_m: r3(g.minY), bodenkontakt: [...g.touch].map(label),
+    haende: hands, glieder: limbs,
+    pruefung: F.map(([a, t]) => ({ art: a === 'f' ? 'fehler' : 'hinweis', text: t })),
+  };
+}
+
+// =====================================================================================
+// Oberfläche: Regler
+// =====================================================================================
+const GROUPS = [
+  ['Becken & Rumpf', ['Hips', 'Spine', 'Spine1', 'Spine2']], ['Kopf & Hals', ['Neck', 'Head']],
+  ['Arm links', ['LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand']], ['Hand links – Finger', 'Left'],
+  ['Arm rechts', ['RightShoulder', 'RightArm', 'RightForeArm', 'RightHand']], ['Hand rechts – Finger', 'Right'],
+  ['Bein links', ['LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeBase']], ['Bein rechts', ['RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeBase']],
+];
+const fingerIds = s => J.filter(j => j.side === s && j.grp === 'hand').map(j => j.id);
+const inputs = {}, blocks = {}, groupOf = {};
+const jointsEl = document.getElementById('joints');
+let lastUndo = 0;
+function setDof(id, k, v) {
+  if (Date.now() - lastUndo > 700) pushUndo();
+  lastUndo = Date.now();
+  pose.j[id][k] = +v;
+  afterChange(id);
+}
+for (const [title, ids] of GROUPS) {
+  const det = document.createElement('details'); det.className = 'grp';
+  const side = typeof ids === 'string' ? ids : (ids[0].startsWith('Left') ? 'Left' : ids[0].startsWith('Right') ? 'Right' : '');
+  if (side === 'Right') det.classList.add('side-R');
+  det.innerHTML = `<summary>${title}</summary>`;
+  const list = typeof ids === 'string' ? fingerIds(ids) : ids;
+  if (typeof ids === 'string') {
+    const q = document.createElement('div'); q.className = 'quick';
+    q.innerHTML = `<div class="dof"><div class="lab"><span>Alle Finger krümmen (0 offen · 18 entspannt · 80 Faust)</span></div><input type="range" min="0" max="90" step="1" value="0" data-q="curl"><input type="number" min="0" max="90" value="0" data-q="curl"></div>
+      <div class="dof"><div class="lab"><span>Alle Finger spreizen</span></div><input type="range" min="-10" max="20" step="1" value="0" data-q="spread"><input type="number" value="0" data-q="spread"></div>`;
+    for (const el of q.querySelectorAll('input')) el.addEventListener('input', () => {
+      for (const o of q.querySelectorAll(`[data-q=${el.dataset.q}]`)) if (o !== el) o.value = el.value;
+      if (Date.now() - lastUndo > 700) pushUndo(); lastUndo = Date.now();
+      el.dataset.q === 'curl' ? curlHand(ids, +el.value) : spreadHand(ids, +el.value);
+      afterChange(null);
+    });
+    det.appendChild(q);
+  }
+  for (const id of list) {
+    const j = JM[id], b = document.createElement('div'); b.className = 'jt'; blocks[id] = b; groupOf[id] = det; inputs[id] = {};
+    b.innerHTML = `<h4><span>${j.label}</span><span><small>${id}</small> <button title="Gelenk zurücksetzen">↺</button></span></h4>`;
+    b.querySelector('button').onclick = () => { pushUndo(); for (const f of j.dofs) pose.j[id][f.k] = 0; afterChange(id); };
+    for (const f of j.dofs) {
+      const row = document.createElement('div'); row.className = 'dof';
+      const step = id === 'Hips' && 'xyz'.includes(f.k) ? 0.5 : 0.5;
+      row.innerHTML = `<div class="lab"><span>${f.l}</span><b></b></div><input type="range" step="${step}"><input type="number" step="${step}">`;
+      const [rg, nm] = row.querySelectorAll('input'), lb = row.querySelector('b');
+      rg.oninput = () => setDof(id, f.k, rg.value);
+      nm.onchange = () => setDof(id, f.k, nm.value);
+      inputs[id][f.k] = { rg, nm, lb, row };
+      b.appendChild(row);
+    }
+    det.appendChild(b);
+  }
+  jointsEl.appendChild(det);
+}
+function curlHand(s, c) {
+  FING.forEach(([n], i) => { const k = c * (1 + 0.1 * i); pose.j[s + n + '1'].beug = r1(k * 0.85); pose.j[s + n + '2'].beug = r1(k * 1.1); pose.j[s + n + '3'].beug = r1(k * 0.75); });
+  pose.j[s + 'Thumb1'].gegen = r1(c * 0.35); pose.j[s + 'Thumb2'].beug = r1(c * 0.45); pose.j[s + 'Thumb3'].beug = r1(c * 0.6);
+  fingerIds(s).forEach(clampJ);
+}
+function spreadHand(s, v) {
+  pose.j[s + 'Index1'].spreiz = v; pose.j[s + 'Middle1'].spreiz = 0; pose.j[s + 'Ring1'].spreiz = r1(v * 0.6); pose.j[s + 'Pinky1'].spreiz = v;
+  fingerIds(s).forEach(clampJ);
+}
+function syncUI() {
+  for (const j of J) for (const f of j.dofs) {
+    const el = inputs[j.id][f.k], [lo, hi] = lim(j, f), v = pose.j[j.id][f.k];
+    el.rg.min = lo; el.rg.max = hi; el.rg.value = v;
+    if (document.activeElement !== el.nm) el.nm.value = r1(v);
+    el.lb.textContent = `${r1(lo)} … ${r1(hi)}`;
+    el.row.classList.toggle('edge', (Math.abs(v - hi) < 0.25 && hi !== 0) || (Math.abs(v - lo) < 0.25 && lo !== 0));
+  }
+  const yIn = inputs.Hips.y; const auto = opts.ground && !opts.feet;
+  yIn.rg.disabled = yIn.nm.disabled = auto; yIn.lb.textContent = auto ? 'automatisch (Boden)' : yIn.lb.textContent;
+}
+
+// Auswahl
+let selected = null;
+const hiCol = new THREE.Color(0x2f6fb0);
+function select(id, scroll = true) {
+  if (selected) { meshesOf[selected].forEach(m => m.material.emissive?.setHex(0)); blocks[selected]?.classList.remove('sel'); }
+  selected = id;
+  if (!id) return;
+  meshesOf[id].forEach(m => m.material.emissive?.copy(hiCol).multiplyScalar(0.45));
+  const b = blocks[id];
+  if (b) { groupOf[id].open = true; b.classList.add('sel'); if (scroll) { showTab('gelenke'); b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
+}
+
+// Undo
+const undoStack = [], redoStack = [];
+function pushUndo() { undoStack.push(clone(pose.j)); if (undoStack.length > 150) undoStack.shift(); redoStack.length = 0; }
+function undo() { if (!undoStack.length) return; redoStack.push(clone(pose.j)); pose.j = undoStack.pop(); afterChange(null, true); }
+function redo() { if (!redoStack.length) return; undoStack.push(clone(pose.j)); pose.j = redoStack.pop(); afterChange(null, true); }
+
+let dirty = false, refreshQueued = false;
+function afterChange(id, noGround = false) {
+  if (id) clampJ(id); else clampAll();
+  applyPose();
+  if (id === 'Hips' || id === null) holdFeet();
+  if (!noGround) groundIt();
+  if (doc.keys.length) dirty = true;
+  queueRefresh();
+}
+function queueRefresh() {
+  if (refreshQueued) return; refreshQueued = true;
+  requestAnimationFrame(() => { refreshQueued = false; syncUI(); placeHandles(); refreshAnalysis(); timelineUI(); saveLocal(); });
+}
+
+// =====================================================================================
+// Ziehen (IK-Griffe)
+// =====================================================================================
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+const tc = new TransformControls(camera, renderer.domElement);
+tc.setSize(0.75); scene.add(tc);
+const handles = {};
+const HANDLE_DEF = { LeftHand: ['Left', 'arm'], RightHand: ['Right', 'arm'], LeftFoot: ['Left', 'leg'], RightFoot: ['Right', 'leg'], Hips: ['', 'root'],
+  LeftForeArm: ['Left', 'elbow'], RightForeArm: ['Right', 'elbow'], LeftLeg: ['Left', 'knee'], RightLeg: ['Right', 'knee'],
+  LeftArm: ['Left', 'shoulder'], RightArm: ['Right', 'shoulder'], Spine2: ['', 'chest'], Neck: ['', 'neck'], Head: ['', 'head'] };
+const HANDLE_COL = { arm: 0xffcc33, leg: 0xffcc33, root: 0x2e7d4f, elbow: 0xff7a1a, knee: 0xff7a1a, shoulder: 0x2a9df4, chest: 0x2a9df4, neck: 0x2a9df4, head: 0x2a9df4 };
+for (const id in HANDLE_DEF) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(id === 'Hips' ? 0.028 : 0.02, 16, 12),
+    new THREE.MeshBasicMaterial({ color: HANDLE_COL[HANDLE_DEF[id][1]], depthTest: false }));
+  m.renderOrder = 10; m.visible = true; m.userData.handle = id; scene.add(m); handles[id] = m;
+}
+let mode = 'rot', dragging = false;
+function placeHandles() { if (dragging) return; for (const id in handles) handles[id].position.copy(wpos(id)); }
+tc.addEventListener('dragging-changed', e => {
+  orbit.enabled = !e.value; dragging = e.value;
+  if (e.value) { pushUndo(); if (opts.feet && !feetTargets) storeFeet(); }
+  else { if (tc.object && tc.object.userData.handle.endsWith('Foot') && opts.feet) storeFeet(); afterChange(null); }
+});
+tc.addEventListener('objectChange', () => moveHandle(tc.object.userData.handle, tc.object.position.clone()));
+// Allgemeiner Loeser: Freiheitsgrade [[Gelenk, Wert]], Ziele [[Gelenk, Punkt, Gewicht]]; Grenzen der Gelenke gelten immer
+function solveDofs(dofs, goals) {
+  const n = dofs.length, get = () => dofs.map(([id, k]) => pose.j[id][k]);
+  const touched = [...new Set(dofs.map(d => d[0]))];
+  const set = v => { dofs.forEach(([id, k], i) => { pose.j[id][k] = v[i]; }); touched.forEach(clampJ); applyPoseFast(); };
+  const res = () => goals.flatMap(([id, t, w]) => { const e = t.clone().sub(wpos(id)); return [e.x * w, e.y * w, e.z * w]; });
+  for (let it = 0; it < 30; it++) {
+    const v0 = get(); set(v0); const e0 = res(); if (Math.hypot(...e0) < 0.003) break;
+    const J_ = [];
+    for (let i = 0; i < n; i++) { const v = v0.slice(); v[i] += 0.5; set(v); J_.push(res().map((x, r) => (e0[r] - x) / 0.5)); }
+    const A = Array.from({ length: n }, (_, a) => Array.from({ length: n + 1 }, (_, b) => b === n ? J_[a].reduce((acc, x, r) => acc + x * e0[r], 0) : J_[a].reduce((acc, x, r) => acc + x * J_[b][r], 0) + (a === b ? 1e-5 : 0)));
+    for (let i = 0; i < n; i++) { let q = i; for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[q][i])) q = r; [A[i], A[q]] = [A[q], A[i]]; if (Math.abs(A[i][i]) < 1e-12) continue; for (let r = 0; r < n; r++) { if (r === i) continue; const f = A[r][i] / A[i][i]; for (let c = i; c <= n; c++) A[r][c] -= f * A[i][c]; } }
+    const dq = A.map((r, i) => clamp(r[n] / (r[i] || 1), -12, 12));
+    set(v0.map((x, i) => x + dq[i]));
+  }
+  for (const id of touched) for (const f of JM[id].dofs) pose.j[id][f.k] = r1(pose.j[id][f.k]);
+  applyPose();
+}
+function applyPoseFast() {
+  const h = pose.j.Hips;
+  groups.Hips.position.copy(restPos('Hips', '')).add(V(h.x / 100, h.y / 100, h.z / 100));
+  for (const j of J) groups[j.id].quaternion.copy(localQ(j));
+  figure.updateMatrixWorld(true);
+}
+let dragKeep = null;
+function moveHandle(id, p) {
+  const [side, limb] = HANDLE_DEF[id];
+  if (limb === 'root') {
+    const rp = restPos('Hips', '');
+    pose.j.Hips.x = r1((p.x - rp.x) * 100); pose.j.Hips.y = r1((p.y - rp.y) * 100); pose.j.Hips.z = r1((p.z - rp.z) * 100);
+    clampJ('Hips'); applyPose(); holdFeet();
+  } else if (limb === 'arm' || limb === 'leg') {
+    solveIK(side, limb, p);
+    if (limb === 'leg' && opts.feet && feetTargets) feetTargets[side] = wpos(side + 'Foot');
+  } else if (limb === 'elbow') {
+    // Ellbogen verschieben, die Hand bleibt liegen (Arm schwenkt um die Linie Schulter-Hand)
+    const hand = dragKeep?.hand ?? wpos(side + 'Hand');
+    solveDofs([[side + 'Arm', 'ebene'], [side + 'Arm', 'heben'], [side + 'Arm', 'dreh'], [side + 'ForeArm', 'beug']], [[side + 'ForeArm', p, 1], [side + 'Hand', hand, 3]]);
+  } else if (limb === 'knee') {
+    const foot = dragKeep?.foot ?? wpos(side + 'Foot');
+    solveDofs([[side + 'UpLeg', 'beug'], [side + 'UpLeg', 'spreiz'], [side + 'UpLeg', 'dreh'], [side + 'Leg', 'beug']], [[side + 'Leg', p, 1], ...(opts.feet ? [[side + 'Foot', foot, 3]] : [])]);
+  } else if (limb === 'shoulder') {
+    solveDofs([[side + 'Shoulder', 'heben'], [side + 'Shoulder', 'vor']], [[side + 'Arm', p, 1]]);
+  } else if (limb === 'chest') {
+    solveDofs([['Spine', 'beug'], ['Spine', 'seit'], ['Spine1', 'beug'], ['Spine1', 'seit'], ['Spine2', 'beug'], ['Spine2', 'seit']], [['Spine2', p, 1]]);
+  } else if (limb === 'neck') {
+    solveDofs([['Spine2', 'beug'], ['Spine2', 'seit'], ['Spine2', 'dreh']], [['Neck', p, 1]]);
+  } else if (limb === 'head') {
+    solveDofs([['Neck', 'beug'], ['Neck', 'seit'], ['Neck', 'dreh'], ['Head', 'beug']], [['Head', p, 1]]);
+  }
+  if (!opts.feet && limb !== 'root') { /* Boden erst am Ende des Ziehens, sonst springt der Körper unter der Maus */ }
+  if (doc.keys.length) dirty = true;
+  queueRefresh();
+}
+
+// Direktes Ziehen mit der Maus: Hand, Fuss oder Griff anfassen und ziehen. Bewegt wird in der Ebene senkrecht zum Blick;
+// fuer die Tiefe die Ansicht wechseln. Liegt vor den Kamera-Reglern (capture), damit sich die Ansicht dabei nicht dreht.
+const dragPlane = new THREE.Plane(), dragHit = V(), dragNormal = V();
+let grabbed = null, grabOffset = V();
+function setPtr(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+}
+function handleOfJoint(id) {
+  if (!id) return null;
+  const j = JM[id];
+  if (!j.side) return id === 'Hips' ? 'Hips' : id === 'Head' || id === 'Neck' ? 'Head' : id === 'Spine2' || id === 'Spine1' || id === 'Spine' ? 'Spine2' : null;
+  if (j.grp === 'hand' || j.base === 'Hand' || j.base === 'ForeArm') return j.side + 'Hand';
+  if (j.base === 'Foot' || j.base === 'ToeBase' || j.base === 'Leg') return j.side + 'Foot';
+  if (j.base === 'Arm') return j.side + 'ForeArm';
+  if (j.base === 'UpLeg') return j.side + 'Leg';
+  return null;
+}
+function nearestHandle(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  let best = null, bd = 24;
+  for (const id in handles) {
+    const v = handles[id].position.clone().project(camera);
+    const d = Math.hypot(r.left + (v.x + 1) / 2 * r.width - e.clientX, r.top + (1 - v.y) / 2 * r.height - e.clientY);
+    if (d < bd) { bd = d; best = id; }
+  }
+  return best;
+}
+renderer.domElement.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || tc.dragging) return;
+  setPtr(e);
+  let id = nearestHandle(e);
+  if (!id) {
+    const hit = ray.intersectObjects(Object.values(meshesOf).flat())[0];
+    id = hit ? handleOfJoint(hit.object.userData.joint) : null;
+    if (id === 'Hips') id = null;   // Rumpf bleibt zum Auswaehlen und Drehen der Ansicht frei, das Becken hat seinen Griff
+  }
+  if (!id) return;
+  tc.detach();
+  grabbed = id; orbit.enabled = false; dragging = true;
+  const at = wpos(id);
+  dragKeep = { hand: HANDLE_DEF[id][0] ? wpos(HANDLE_DEF[id][0] + 'Hand') : null, foot: HANDLE_DEF[id][0] ? wpos(HANDLE_DEF[id][0] + 'Foot') : null };
+  camera.getWorldDirection(dragNormal);
+  dragPlane.setFromNormalAndCoplanarPoint(dragNormal, at);
+  ray.ray.intersectPlane(dragPlane, dragHit);
+  grabOffset = at.clone().sub(dragHit);
+  pushUndo(); if (opts.feet && !feetTargets) storeFeet();
+  renderer.domElement.setPointerCapture(e.pointerId);
+  select(id);
+  e.stopImmediatePropagation();
+}, { capture: true });
+renderer.domElement.addEventListener('pointermove', e => {
+  if (!grabbed) {
+    if (!tc.dragging) {
+      setPtr(e);
+      const near = nearestHandle(e), hit = near ? null : ray.intersectObjects(Object.values(meshesOf).flat())[0];
+      const over = near || (hit && handleOfJoint(hit.object.userData.joint) && handleOfJoint(hit.object.userData.joint) !== 'Hips');
+      renderer.domElement.style.cursor = over ? 'grab' : '';
+    }
+    return;
+  }
+  renderer.domElement.style.cursor = 'grabbing';
+  setPtr(e);
+  if (!ray.ray.intersectPlane(dragPlane, dragHit)) return;
+  const tgt = dragHit.clone().add(grabOffset);
+  handles[grabbed].position.copy(tgt);
+  moveHandle(grabbed, tgt);
+});
+function endGrab(e) {
+  if (!grabbed) return;
+  const id = grabbed; grabbed = null; dragging = false; orbit.enabled = true;
+  renderer.domElement.style.cursor = '';
+  if (id.endsWith('Foot') && opts.feet) storeFeet();
+  afterChange(null); placeHandles();
+  e.stopImmediatePropagation();
+}
+renderer.domElement.addEventListener('pointerup', endGrab, { capture: true });
+renderer.domElement.addEventListener('pointercancel', endGrab, { capture: true });
+function setMode(m) {
+  mode = m; document.getElementById('modeRot').classList.toggle('on', m === 'rot'); document.getElementById('modeIK').classList.toggle('on', m === 'ik');
+  for (const id in handles) handles[id].visible = true;
+  if (m !== 'ik') tc.detach();
+}
+document.getElementById('modeRot').onclick = () => setMode('rot');
+document.getElementById('modeIK').onclick = () => setMode('ik');
+
+// Anklicken
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5 || dragging) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  if (mode === 'ik') {
+    const hh = ray.intersectObjects(Object.values(handles));
+    if (hh.length) return;
+  }
+  const hit = ray.intersectObjects(Object.values(meshesOf).flat())[0];
+  select(hit ? hit.object.userData.joint : null);
+});
+
+// Ansichten
+const VIEWS = { front: [0, 1.1, 5], back: [0, 1.1, -5], left: [5, 1.1, 0], right: [-5, 1.1, 0], top: [0, 6, 0.01], q: [3.1, 2.0, 3.8] };
+function setView(v) {
+  const [x, y, z] = VIEWS[v], t = wpos('Hips'); orbit.target.set(t.x, 0.95, t.z);
+  camera.position.set(t.x + x, y, t.z + z); orbit.update();
+}
+for (const b of document.querySelectorAll('[data-view]')) b.onclick = () => setView(b.dataset.view);
+
+// =====================================================================================
+// Daten-Anzeige und Prüfbericht
+// =====================================================================================
+const checksEl = document.getElementById('checks'), dataEl = document.getElementById('data');
+let lastAnalysis = null;
+function refreshAnalysis() {
+  const A = lastAnalysis = analyze();
+  const fs = A.pruefung;
+  checksEl.innerHTML = `<div class="t">Prüfung</div>` + (fs.length ? `<ul>${fs.slice(0, 8).map(f => `<li class="${f.art === 'fehler' ? 'f' : 'h'}">${f.text}</li>`).join('')}${fs.length > 8 ? `<li>… ${fs.length - 8} weitere (Daten)</li>` : ''}</ul>`
+    : `<div class="good">0 Befunde</div>`) + `<div class="mute" style="margin-top:4px">Boden: ${A.bodenkontakt.length ? A.bodenkontakt.slice(0, 4).join(', ') + (A.bodenkontakt.length > 4 ? ' …' : '') : '–'}</div>`;
+  if (!document.getElementById('tab-daten').hidden) renderData(A);
+}
+function renderData(A) {
+  const nonzero = J.map(j => [j, j.dofs.filter(f => Math.abs(pose.j[j.id][f.k]) > 0.05)]).filter(x => x[1].length);
+  const p = A.gelenk_positionen_m;
+  const keyPts = ['Hips', 'Spine2', 'Head', 'HeadTop', 'Nose', 'LeftArm', 'LeftForeArm', 'LeftHand', 'LeftMiddleTip', 'RightArm', 'RightForeArm', 'RightHand', 'RightMiddleTip',
+                  'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeTip', 'LeftHeel', 'RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeTip', 'RightHeel'];
+  const nm = k => JM[k] ? label(k) : ({ HeadTop: 'Scheitel', Nose: 'Nasenspitze' }[k] || k.replace('Left', 'links ').replace('Right', 'rechts ').replace('MiddleTip', 'Mittelfingerspitze').replace('ToeTip', 'Zehenspitze').replace('Heel', 'Ferse'));
+  const vec = v => v.map(x => (x * 100).toFixed(1)).join(' / ');
+  dataEl.innerHTML = `
+  <h3>Prüfung</h3>${A.pruefung.length ? `<ul>${A.pruefung.map(f => `<li style="color:var(--${f.art === 'fehler' ? 'bad' : 'warn'})">${f.text}</li>`).join('')}</ul>` : '<p class="mute">0 Befunde</p>'}
+  <h3>Gelenkwinkel (nur verstellte, Grad)</h3>
+  <table class="tbl"><tr><th>Gelenk</th><th>Werte</th></tr>${nonzero.map(([j, fs]) => `<tr><td>${label(j.id)}<br><span class="mute">${j.id}</span></td><td>${fs.map(f => `${f.k} <b>${r1(pose.j[j.id][f.k])}</b>`).join(' · ')}</td></tr>`).join('') || '<tr><td colspan=2 class="mute">Grundstellung</td></tr>'}</table>
+  <h3>Schwerpunkt und Boden</h3>
+  <table class="tbl"><tr><td>Schwerpunkt (cm, X/Y/Z)</td><td class="n">${vec(A.schwerpunkt_m)}</td></tr>
+  <tr><td>außerhalb der Stützfläche</td><td class="n">${A.schwerpunkt_ausserhalb_cm == null ? '–' : A.schwerpunkt_ausserhalb_cm + ' cm'}</td></tr>
+  <tr><td>tiefster Punkt</td><td class="n">${(A.tiefster_punkt_m * 100).toFixed(1)} cm</td></tr>
+  <tr><td>Bodenkontakt</td><td>${A.bodenkontakt.join(', ') || '–'}</td></tr></table>
+  <h3>Arme, Hände, Beine</h3>
+  <table class="tbl"><tr><th></th><th>links</th><th>rechts</th></tr>
+  ${['arm_hebung_gesamt_grad', 'schulterblatt_auto_grad'].map(k => `<tr><td>${k === 'arm_hebung_gesamt_grad' ? 'Arm-Hebung gesamt' : 'Schulterblatt automatisch'}</td><td class="n">${A.glieder.Left[k]}°</td><td class="n">${A.glieder.Right[k]}°</td></tr>`).join('')}
+  ${[['ellbogen_richtung', 'Ellbogen zeigt nach'], ['knie_richtung', 'Knie zeigt nach']].map(([k, t]) => `<tr><td>${t}</td><td class="n">${A.glieder.Left[k].join(' ')}</td><td class="n">${A.glieder.Right[k].join(' ')}</td></tr>`).join('')}
+  ${[['handflaeche_richtung', 'Handfläche zeigt nach'], ['finger_richtung', 'Finger zeigen nach'], ['daumen_richtung', 'Daumen zeigt nach']].map(([k, t]) => `<tr><td>${t}</td><td class="n">${A.haende.Left[k].join(' ')}</td><td class="n">${A.haende.Right[k].join(' ')}</td></tr>`).join('')}
+  </table><p class="mute">Richtungen als Einheitsvektor in Blender-Achsen: (1 0 0) = links der Figur, (0 −1 0) = vorn, (0 0 1) = oben.</p>
+  <h3>Gelenkpositionen (cm, X/Y/Z Blender)</h3>
+  <table class="tbl">${keyPts.map(k => `<tr><td>${nm(k)}</td><td class="n">${vec(p[k])}</td></tr>`).join('')}</table>
+  <h3>Lokale Drehungen (Quaternion w x y z, Blender-Achsen)</h3>
+  <table class="tbl">${J.filter(j => j.grp !== 'hand').map(j => `<tr><td>${j.id}</td><td class="n">${A.quat_lokal[j.id].map(x => x.toFixed(3)).join(' ')}</td></tr>`).join('')}</table>
+  <h3>Vollständige Daten dieser Pose</h3>
+  <pre class="json">${JSON.stringify({ winkel: pose.j, abgeleitet: A }, null, 1).replace(/</g, '&lt;')}</pre>`;
+}
+
+// =====================================================================================
+// Keys / Zeitleiste
+// =====================================================================================
+const doc = { name: '', beschreibung: '', fps: 30, length: 60, keys: [] };
+let frame = 0, playing = false;
+const frameEl = document.getElementById('frame');
+const sortKeys = () => doc.keys.sort((a, b) => a.frame - b.frame);
+function interp(f) {
+  sortKeys();
+  const ks = doc.keys; let k0 = null, k1 = null;
+  for (const k of ks) { if (k.frame <= f) k0 = k; if (k.frame >= f && !k1) k1 = k; }
+  if (!k0) return clone(k1.j); if (!k1 || k0 === k1) return clone(k0.j);
+  const t = (f - k0.frame) / (k1.frame - k0.frame), o = neutral();
+  for (const id in o) for (const k in o[id]) o[id][k] = (k0.j[id]?.[k] ?? 0) * (1 - t) + (k1.j[id]?.[k] ?? 0) * t;
+  return o;
+}
+function setFrame(f, fromPlay = false) {
+  frame = Math.round(clamp(f, 0, doc.length));
+  if (doc.keys.length) { pose.j = interp(frame); clampAll(); applyPose(); groundIt(); dirty = false; }
+  if (!fromPlay) queueRefresh(); else { placeHandles(); timelineUI(); }
+}
+function timelineUI() {
+  frameEl.max = doc.length; frameEl.value = frame;
+  document.getElementById('fnum').textContent = frame;
+  document.getElementById('ticks').innerHTML = doc.keys.map(k => `<span style="left:${k.frame / doc.length * 100}%"></span>`).join('');
+  const atKey = doc.keys.some(k => k.frame === frame);
+  document.getElementById('kinfo').textContent = doc.keys.length ? `${doc.keys.length} Keys${atKey ? ' · auf Key' : ''}` : 'keine Keys (Einzelpose)';
+  document.getElementById('dirty').textContent = dirty ? '· geändert, nicht als Key gesetzt' : '';
+}
+frameEl.oninput = () => { if (dirty && !confirmDiscard()) { frameEl.value = frame; return; } setFrame(+frameEl.value); };
+let discardWarned = 0;
+function confirmDiscard() {   // ohne Browser-Dialog: zweiter Versuch innerhalb von 4 s verwirft
+  if (Date.now() - discardWarned < 4000) { dirty = false; return true; }
+  discardWarned = Date.now(); flash('Änderungen sind noch kein Key. Erst „◆ Key setzen“ – oder nochmal verschieben, dann wird verworfen.');
+  return false;
+}
+document.getElementById('kSet').onclick = () => {
+  const i = doc.keys.findIndex(k => k.frame === frame), k = { frame, j: clone(pose.j) };
+  if (i >= 0) doc.keys[i] = k; else doc.keys.push(k);
+  sortKeys(); dirty = false; queueRefresh(); flash(`Key bei Bild ${frame} gesetzt`);
+};
+document.getElementById('kDel').onclick = () => {
+  const i = doc.keys.findIndex(k => k.frame === frame); if (i < 0) return flash('Auf diesem Bild liegt kein Key.');
+  doc.keys.splice(i, 1); dirty = false; queueRefresh();
+};
+const jumpKey = dir => {
+  sortKeys(); const ks = doc.keys.map(k => k.frame);
+  const t = dir > 0 ? ks.find(f => f > frame) : ks.slice().reverse().find(f => f < frame);
+  if (t != null) setFrame(t);
+};
+document.getElementById('kPrev').onclick = () => jumpKey(-1);
+document.getElementById('kNext').onclick = () => jumpKey(1);
+let playT0 = 0, playF0 = 0;
+document.getElementById('play').onclick = () => {
+  if (doc.keys.length < 2) return flash('Zum Abspielen mindestens zwei Keys setzen.');
+  playing = !playing; document.getElementById('play').textContent = playing ? '❚❚' : '▶';
+  sortKeys(); playT0 = performance.now(); playF0 = frame < doc.keys[0].frame || frame >= doc.keys.at(-1).frame ? doc.keys[0].frame : frame;
+  if (!playing) queueRefresh();
+};
+document.getElementById('flen').onchange = e => { doc.length = clamp(+e.target.value || 60, 10, 2000); timelineUI(); };
+document.getElementById('fps').onchange = e => { doc.fps = clamp(+e.target.value || 30, 1, 120); };
+
+// =====================================================================================
+// Vorlagen
+// =====================================================================================
+function both(o, id, vals) { for (const s of ['Left', 'Right']) Object.assign(o[s + id], vals); }
+const PRESETS = {
+  'Grundstellung (alles 0)': () => {},
+  'Entspannt stehen': o => { both(o, 'Arm', { heben: 4 }); both(o, 'ForeArm', { beug: 15 }); both(o, 'Hand', { beug: 5 }); return { curl: 18 }; },
+  'T-Pose': o => { both(o, 'Arm', { heben: 90 }); },
+  'Jubel (Arme im V)': o => { both(o, 'Arm', { ebene: 15, heben: 140, dreh: 60 }); both(o, 'ForeArm', { beug: 15 }); o.Neck.beug = -12; o.Head.beug = -8; both(o, 'Shoulder', { heben: 5 }); return { curl: 15 }; },
+  'Sprint (links vorn)': o => {
+    Object.assign(o.LeftUpLeg, { beug: 55 }); Object.assign(o.LeftLeg, { beug: 70 }); Object.assign(o.LeftFoot, { heb: 10 });
+    Object.assign(o.RightUpLeg, { beug: -20 }); Object.assign(o.RightLeg, { beug: 25 }); Object.assign(o.RightFoot, { heb: -30 }); Object.assign(o.RightToeBase, { heb: 30 });
+    Object.assign(o.RightArm, { ebene: 90, heben: 40 }); Object.assign(o.RightForeArm, { beug: 95 });
+    Object.assign(o.LeftArm, { ebene: -90, heben: 40 }); Object.assign(o.LeftForeArm, { beug: 85 });
+    o.Hips.vor = 8; o.Spine1.beug = 4; o.Hips.dreh = -6; o.Spine2.dreh = 8; return { curl: 70 };
+  },
+  'Tiefe Hocke': o => {
+    both(o, 'UpLeg', { beug: 110, spreiz: 25, dreh: 0 }); both(o, 'Leg', { beug: 135 }); both(o, 'Foot', { heb: 30 });
+    o.Hips.vor = 15; o.Spine.beug = 15; o.Spine1.beug = 10; o.Spine2.beug = 5; o.Neck.beug = -20;
+    both(o, 'Arm', { ebene: 90, heben: 70 }); both(o, 'ForeArm', { beug: 20 }); return { curl: 25 };
+  },
+  'Hände in die Hüften': o => {
+    both(o, 'Arm', { ebene: -10, heben: 45, dreh: -60 }); both(o, 'ForeArm', { beug: 100, dreh: 30 }); both(o, 'Hand', { beug: -25 });
+    return { curl: 10, ik: { Left: [0.118, 0.585, -0.012], Right: [-0.118, 0.585, -0.012] } };
+  },
+};
+const presetEl = document.getElementById('preset');
+for (const n in PRESETS) presetEl.insertAdjacentHTML('beforeend', `<option>${n}</option>`);
+presetEl.onchange = () => {
+  const n = presetEl.value; presetEl.value = ''; if (!n) return;
+  pushUndo(); const o = neutral(); const extra = PRESETS[n](o) || {}; pose.j = o;
+  if (extra.curl) { curlHand('Left', extra.curl); curlHand('Right', extra.curl); }
+  pose.j.Hips.y = 0; afterChange(null);
+  if (extra.ik) { for (const s in extra.ik) solveIK(s, 'arm', V(...extra.ik[s]).multiplyScalar(H)); afterChange(null); }
+  flash(`Vorlage „${n}“ geladen – an der Puppe weiter anpassen.`);
+};
+document.getElementById('reset').onclick = () => { pushUndo(); pose.j = neutral(); afterChange(null); };
+function copySide(from, to) { for (const j of J) if (j.side === from) pose.j[to + j.base] = clone(pose.j[j.id]); }
+document.getElementById('l2r').onclick = () => { pushUndo(); copySide('Left', 'Right'); afterChange(null); };
+document.getElementById('r2l').onclick = () => { pushUndo(); copySide('Right', 'Left'); afterChange(null); };
+document.getElementById('swap').onclick = () => {
+  pushUndo(); const L = {}; for (const j of J) if (j.side === 'Left') L[j.base] = clone(pose.j[j.id]);
+  copySide('Right', 'Left'); for (const b in L) pose.j['Right' + b] = L[b];
+  for (const id of ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head']) { const a = pose.j[id]; a.seit = -a.seit; a.dreh = -a.dreh; if ('x' in a) a.x = -a.x; }
+  afterChange(null);
+};
+document.getElementById('undo').onclick = undo; document.getElementById('redo').onclick = redo;
+addEventListener('keydown', e => {
+  if (e.target.matches('input[type=text],input:not([type]),textarea')) return;
+  if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+  if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+  if (e.key === 'Escape') { tc.detach(); select(null); }
+});
+const optEl = id => document.getElementById(id);
+optEl('optScap').onchange = e => { opts.scap = e.target.checked; afterChange(null); };
+optEl('optGround').onchange = e => { opts.ground = e.target.checked; afterChange(null); };
+optEl('optFeet').onchange = e => { opts.feet = e.target.checked; if (opts.feet) storeFeet(); else feetTargets = null; afterChange(null, true); };
+
+// =====================================================================================
+// Speichern / Laden
+// =====================================================================================
+const msgEl = document.getElementById('msg');
+let flashT;
+function flash(t, bad = false) { msgEl.textContent = t; msgEl.style.color = bad ? 'var(--bad)' : 'var(--ok)'; document.getElementById('dirty').textContent = t; clearTimeout(flashT); flashT = setTimeout(() => timelineUI(), 3500); }
+const nameEl = document.getElementById('docName'), descEl = document.getElementById('docDesc');
+nameEl.oninput = () => { doc.name = nameEl.value; saveLocal(); }; descEl.oninput = () => { doc.beschreibung = descEl.value; saveLocal(); };
+const safeName = n => (n || '').trim().replace(/[^\wäöüÄÖÜß\- ]+/g, '_').slice(0, 80);
+function buildFile() {
+  const keys = doc.keys.length ? (sortKeys(), doc.keys) : [{ frame: 0, j: pose.j }];
+  const keep = clone(pose.j);
+  const out = {
+    format: 'gelenkpuppe', version: 1, name: safeName(doc.name) || 'pose', beschreibung: doc.beschreibung,
+    gespeichert: new Date().toISOString(), koerpergroesse_m: H, fps: doc.fps, laenge_bilder: doc.length,
+    optionen: { schulterblatt_automatisch: opts.scap, boden_automatisch: opts.ground },
+    konvention: {
+      koordinaten: 'Blender-Achsen, Meter: +X = links der Figur, -Y = vorn (Blickrichtung), +Z = oben. Becken-Ruhehoehe 0,53 H.',
+      grundstellung: 'aufrecht, Arme haengend (Tragewinkel ~8 Grad), Handflaechen zum Koerper, Daumen vorn, Fuesse unter den Hueften',
+      winkel: 'Grad je Gelenk und Freiheitsgrad (siehe gelenke), rechts gleiche Bedeutung wie links (gespiegelt)',
+      quat_lokal: '[w,x,y,z] Drehung relativ zum Elternknochen, Achsen im Koerperrahmen der Grundstellung (wie world_rot/combine im Rig)',
+      quat_rig: 'wie quat_lokal, aber Schluesselbein/Oberarm ohne Schulterblatt-Automatik (das Rig rechnet scapula_rhythm selbst)',
+      knochen: 'Mixamo-Namen (Hips, Spine, Spine1, Spine2, Neck, Head, LeftShoulder, LeftArm, LeftForeArm, LeftHand, LeftUpLeg, LeftLeg, LeftFoot ...)',
+    },
+    gelenke: Object.fromEntries(J.filter(j => j.side !== 'Right').map(j => [j.id.replace('Left', '*'), { name: j.label, dof: Object.fromEntries(j.dofs.map(f => [f.k, { text: f.l, min: f.min, max: f.max }])) }])),
+    keys: keys.map(k => { pose.j = clone(k.j); clampAll(); applyPose(); return { frame: k.frame, winkel: clone(k.j), abgeleitet: analyze() }; }),
+  };
+  pose.j = keep; applyPose();
+  return out;
+}
+function loadFile(data) {
+  if (!data || data.format !== 'gelenkpuppe' || !Array.isArray(data.keys)) throw new Error('Keine Gelenkpuppen-Datei');
+  pushUndo();
+  const fill = w => { const o = neutral(); for (const id in o) for (const k in o[id]) if (w?.[id]?.[k] != null) o[id][k] = +w[id][k]; return o; };
+  doc.name = data.name || ''; doc.beschreibung = data.beschreibung || ''; doc.fps = data.fps || 30;
+  doc.keys = data.keys.map(k => ({ frame: k.frame | 0, j: fill(k.winkel) }));
+  doc.length = Math.max(data.laenge_bilder || 60, ...doc.keys.map(k => k.frame + 10));
+  if (data.optionen) { opts.scap = data.optionen.schulterblatt_automatisch !== false; opts.ground = data.optionen.boden_automatisch !== false; optEl('optScap').checked = opts.scap; optEl('optGround').checked = opts.ground; }
+  nameEl.value = doc.name; descEl.value = doc.beschreibung; optEl('flen').value = doc.length; optEl('fps').value = doc.fps;
+  const single = doc.keys.length === 1;
+  pose.j = clone(doc.keys[0].j); if (single) doc.keys = [];
+  frame = single ? 0 : doc.keys[0].frame; dirty = false;
+  clampAll(); applyPose(); queueRefresh();
+}
+let server = false;
+async function api(path, opt) { const r = await fetch('/api/posen' + path, opt); if (!r.ok) throw new Error((await r.text()) || r.status); return r.json(); }
+async function listFiles() {
+  const ul = document.getElementById('files');
+  try {
+    const fs = await api(''); server = true;
+    document.getElementById('srv').textContent = 'Server verbunden · speichert in posen/';
+    ul.innerHTML = fs.length ? '' : '<li class="mute">noch keine</li>';
+    for (const f of fs) {
+      const li = document.createElement('li');
+      li.innerHTML = `<div><b></b><small></small></div><button class="b">Laden</button>`;
+      li.querySelector('b').textContent = f.name;
+      li.querySelector('small').textContent = `${f.keys} Key(s) · ${new Date(f.geaendert * 1000).toLocaleString('de-DE')} · ${f.beschreibung || ''}`;
+      li.querySelector('button').onclick = async () => { try { loadFile(await api('/' + encodeURIComponent(f.name))); flash(`„${f.name}“ geladen`); } catch (e) { flash('Laden fehlgeschlagen: ' + e.message, true); } };
+      ul.appendChild(li);
+    }
+    return fs;
+  } catch (e) {
+    server = false; document.getElementById('srv').textContent = 'ohne Server – nur Download/Datei öffnen';
+    ul.innerHTML = '<li class="mute">Server nicht erreichbar. Starte „Puppe starten.bat“ im Ordner Tools\\puppe.</li>';
+    return null;
+  }
+}
+let overwriteArmed = 0;
+document.getElementById('saveSrv').onclick = async () => {
+  const n = safeName(nameEl.value); if (!n) return flash('Bitte zuerst einen Namen eingeben.', true);
+  if (dirty) return flash('Die aktuelle Änderung ist noch kein Key – erst „◆ Key setzen“.', true);
+  const fs = await listFiles(); if (!server) return flash('Kein Server – nutze „Als Datei herunterladen“.', true);
+  if (fs.some(f => f.name === n) && Date.now() - overwriteArmed > 5000) { overwriteArmed = Date.now(); return flash(`„${n}“ gibt es schon. Nochmal klicken zum Überschreiben (alte Fassung wird gesichert).`, true); }
+  try { doc.name = n; const r = await api('/' + encodeURIComponent(n), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildFile(), null, 1) }); flash(`Gespeichert: ${r.pfad}`); listFiles(); }
+  catch (e) { flash('Speichern fehlgeschlagen: ' + e.message, true); }
+};
+document.getElementById('download').onclick = () => {
+  const data = buildFile(), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
+  a.download = data.name + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+document.getElementById('fileIn').onchange = async e => { try { loadFile(JSON.parse(await e.target.files[0].text())); flash('Datei geladen'); } catch (er) { flash('Datei nicht lesbar: ' + er.message, true); } e.target.value = ''; };
+document.getElementById('pasteBtn').onclick = () => { try { loadFile(JSON.parse(document.getElementById('pasteIn').value)); flash('Übernommen'); } catch (er) { flash('JSON nicht lesbar: ' + er.message, true); } };
+document.getElementById('copyJson').onclick = async () => {
+  const t = JSON.stringify(buildFile(), null, 1);
+  try { await navigator.clipboard.writeText(t); flash('JSON in die Zwischenablage kopiert'); } catch { flash('Kopieren nicht erlaubt – nutze „Als Datei herunterladen“', true); }
+};
+function saveLocal() { try { localStorage.setItem('gelenkpuppe', JSON.stringify({ doc, pose: pose.j, frame })); } catch { } }
+function loadLocal() {
+  try {
+    const s = JSON.parse(localStorage.getItem('gelenkpuppe') || 'null'); if (!s) return;
+    const o = neutral(); for (const id in o) for (const k in o[id]) if (s.pose?.[id]?.[k] != null) o[id][k] = +s.pose[id][k];
+    pose.j = o; Object.assign(doc, s.doc || {}); doc.keys = (doc.keys || []).map(k => { const w = neutral(); for (const id in w) for (const kk in w[id]) if (k.j?.[id]?.[kk] != null) w[id][kk] = +k.j[id][kk]; return { frame: k.frame, j: w }; });
+    frame = s.frame || 0; nameEl.value = doc.name || ''; descEl.value = doc.beschreibung || ''; optEl('flen').value = doc.length; optEl('fps').value = doc.fps;
+  } catch { }
+}
+
+// Reiter
+function showTab(t) {
+  for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b.dataset.tab === t);
+  for (const s of document.querySelectorAll('.tab')) s.hidden = s.id !== 'tab-' + t;
+  if (t === 'daten' && lastAnalysis) renderData(lastAnalysis);
+  if (t === 'datei') listFiles();
+}
+for (const b of document.querySelectorAll('.tabs button')) b.onclick = () => showTab(b.dataset.tab);
+
+// =====================================================================================
+// Start und Zeichenschleife
+// =====================================================================================
+function resize() { const r = view.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize);
+loadLocal();
+clampAll(); applyPose(); groundIt(); resize(); setView('q'); setMode('ik'); queueRefresh(); listFiles();
+window.puppe = { applyPoseFast, mpos, clampAll, player, camera, scene, orbit, get pose() { return pose; }, J, applyPose, analyze, solveIK, buildFile, loadFile, wpos, setView, setMode, afterChange, groundIt, opts, V, setPose: j => { pose.j = j; afterChange(null); } };
+if (new URLSearchParams(location.search).has('training')) import('./training.js');
+renderer.setAnimationLoop(() => {
+  if (playing) {
+    const ks = doc.keys, f0 = ks[0].frame, f1 = ks.at(-1).frame;
+    let f = playF0 + (performance.now() - playT0) / 1000 * doc.fps;
+    if (f > f1) { playT0 = performance.now(); playF0 = f0; f = f0; }
+    setFrame(Math.floor(f), true);
+  }
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
