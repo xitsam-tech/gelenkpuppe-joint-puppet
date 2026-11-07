@@ -924,6 +924,47 @@ const MOVES = {
                RightArm: { ebene: 40, heben: 25, dreh: 0 }, LeftArm: { ebene: 40, heben: 25 }, RightForeArm: { beug: 40 }, LeftForeArm: { beug: 40 } }) },
     ],
   },
+  // Freiwurf (Standwurf ohne Sprung): Ball an der Brust, Knie beugen (~40), dann strecken die Beine, die Fersen heben sich
+  // (auf die Fussballen), der Ball steigt zum Set Point ("L" wie beim Sprungwurf), Abgabe mit gestrecktem Arm ~50 Grad nach vorn oben,
+  // Handgelenk klappt nach (Schwanenhals) und der Arm bleibt im Nachfuehren, bis der Ball den Ring erreicht. Abgabe bei t = 0,72 s.
+  bb_freiwurf: {
+    period: 1.4, fusshaltung: true, stand: true,
+    keys: [
+      { t: 0, boden: true, hand: 15, H: { x: 0, z: 0, vor: 5 },
+        ikRel: { Right: [-0.15, 0.24, 0.22], Left: [0.09, 0.28, 0.25] },
+        J: L({ LeftUpLeg: { beug: 16, spreiz: 4 }, RightUpLeg: { beug: 16, spreiz: 4 }, LeftLeg: { beug: 22 }, RightLeg: { beug: 22 }, Spine: { beug: 3 },
+               RightArm: { ebene: 70, heben: 30, dreh: 0 }, LeftArm: { ebene: 70, heben: 30 }, RightForeArm: { beug: 110, dreh: -30 }, LeftForeArm: { beug: 110, dreh: -40 }, RightHand: { beug: -20 } }) },
+      // Knie beugen, Ball sinkt etwas
+      { t: 0.30, boden: true, hand: 15, H: { x: 0, z: 0, vor: 10 },
+        ikRel: { Right: [-0.15, 0.16, 0.24], Left: [0.09, 0.20, 0.27] },
+        J: L({ LeftUpLeg: { beug: 36, spreiz: 4 }, RightUpLeg: { beug: 36, spreiz: 4 }, LeftLeg: { beug: 42 }, RightLeg: { beug: 42 }, LeftFoot: { heb: 8 }, RightFoot: { heb: 8 }, Spine: { beug: 5 },
+               RightArm: { ebene: 70, heben: 28, dreh: 0 }, LeftArm: { ebene: 70, heben: 28 }, RightForeArm: { beug: 115, dreh: -30 }, LeftForeArm: { beug: 115, dreh: -40 }, RightHand: { beug: -25 }, Neck: { beug: -6 } }) },
+      // Beine strecken, Fersen heben, Ball zum Set Point
+      { t: 0.55, boden: true, hand: 15, H: { x: 0, z: 0, vor: 3 },
+        ikRel: { Right: [-0.17, 0.79, 0.27], Left: [-0.02, 0.83, 0.27] },
+        J: L({ LeftUpLeg: { beug: 8, spreiz: 3 }, RightUpLeg: { beug: 8, spreiz: 3 }, LeftLeg: { beug: 10 }, RightLeg: { beug: 10 }, LeftFoot: { heb: -18 }, RightFoot: { heb: -18 },
+               RightArm: { ebene: 100, heben: 100, dreh: 0 }, LeftArm: { ebene: 75, heben: 105, dreh: -20 }, RightForeArm: { beug: 90, dreh: -60 }, LeftForeArm: { beug: 100, dreh: -10 }, RightHand: { beug: -60 }, Neck: { beug: -8 } }) },
+      // Abgabe auf den Fussballen
+      { t: 0.72, boden: true, hand: 12, H: { x: 0, z: 0, vor: 1 },
+        ikRel: { Right: [-0.17, 0.88, 0.33], Left: [0.02, 0.80, 0.28] },
+        J: L({ LeftUpLeg: { beug: 4, spreiz: 3 }, RightUpLeg: { beug: 4, spreiz: 3 }, LeftLeg: { beug: 5 }, RightLeg: { beug: 5 }, LeftFoot: { heb: -28 }, RightFoot: { heb: -28 },
+               RightArm: { ebene: 95, heben: 130, dreh: 0 }, LeftArm: { ebene: 70, heben: 100, dreh: -20 }, RightForeArm: { beug: 12, dreh: -20 }, LeftForeArm: { beug: 95, dreh: -10 }, RightHand: { beug: 0 }, Neck: { beug: -10 } }) },
+      // Nachfuehren: Handgelenk klappt nach vorn
+      { t: 0.86, boden: true, hand: 25, H: { x: 0, z: 0, vor: 2 },
+        ikRel: { Right: [-0.15, 0.88, 0.36], Left: [0.08, 0.66, 0.28] },
+        J: L({ LeftUpLeg: { beug: 5, spreiz: 3 }, RightUpLeg: { beug: 5, spreiz: 3 }, LeftLeg: { beug: 6 }, RightLeg: { beug: 6 }, LeftFoot: { heb: -20 }, RightFoot: { heb: -20 },
+               RightArm: { ebene: 90, heben: 135, dreh: 0 }, LeftArm: { ebene: 60, heben: 85, dreh: -10 }, RightForeArm: { beug: 10, dreh: 30 }, LeftForeArm: { beug: 90 }, RightHand: { beug: 70 } }) },
+      // Fersen wieder ab, Arm bleibt im Nachfuehren
+      { t: 1.05, boden: true, hand: 25, H: { x: 0, z: 0, vor: 3 },
+        ikRel: { Right: [-0.15, 0.86, 0.36], Left: [0.12, 0.45, 0.24] },
+        J: L({ LeftUpLeg: { beug: 10, spreiz: 4 }, RightUpLeg: { beug: 10, spreiz: 4 }, LeftLeg: { beug: 14 }, RightLeg: { beug: 14 },
+               RightArm: { ebene: 90, heben: 133, dreh: 0 }, LeftArm: { ebene: 50, heben: 60 }, RightForeArm: { beug: 12, dreh: 30 }, LeftForeArm: { beug: 70 }, RightHand: { beug: 65 } }) },
+      { t: 1.4, boden: true, hand: 25, H: { x: 0, z: 0, vor: 4 },
+        ikRel: { Right: [-0.24, 0.10, 0.12], Left: [0.24, 0.10, 0.12] },
+        J: L({ LeftUpLeg: { beug: 12, spreiz: 4 }, RightUpLeg: { beug: 12, spreiz: 4 }, LeftLeg: { beug: 16 }, RightLeg: { beug: 16 },
+               RightArm: { ebene: 40, heben: 25, dreh: 0 }, LeftArm: { ebene: 40, heben: 25 }, RightForeArm: { beug: 40 }, LeftForeArm: { beug: 40 } }) },
+    ],
+  },
   // Brustpass beidhaendig: Ball an der Brust, Gewicht nach vorn, Arme strecken nach vorn, Unterarme drehen nach innen
   // (Pronation), am Ende zeigen die Daumen nach unten, Handflaechen nach aussen. Ball verlaesst die Haende bei t = 0,30 s.
   bb_brustpass: {
