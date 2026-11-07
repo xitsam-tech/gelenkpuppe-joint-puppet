@@ -1063,7 +1063,10 @@ function bakeMove(name) {
       const hs = k => cat(K[i0].H[k] || 0, K[a].H[k] || 0, K[b].H[k] || 0, K[i3].H[k] || 0, u);
       j.Hips.seit += hs('seit'); j.Hips.dreh += hs('dreh');
       setHands(hk(a) + (hk(b) - hk(a)) * u);
-      p.clampAll(); p.applyPoseFast();
+      p.clampAll(); p.applyPose();
+      // Nie unter den Boden: geaenderte Arme/Becken koennen die Gangart absenken (Dribbeln im Lauf sank bis 7 cm ein).
+      // Nur anheben, nie absenken, damit Flugphasen der Gangart bleiben.
+      { const y0 = j.Hips.y; p.opts.ground = true; p.groundIt(); p.opts.ground = false; if (j.Hips.y < y0) j.Hips.y = y0; p.applyPoseFast(); }
       frames.push(JSON.parse(JSON.stringify(j))); ground.push(true);
       continue;
     }
