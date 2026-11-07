@@ -108,6 +108,14 @@ Jede Pose oder Bewegung ist eine JSON-Datei mit `"format": "gelenkpuppe"`:
    Gelenkpositionen und Proportionen. „Eigenes Modell zeigen“ zeigt die Figur statt der Puppe.
 3. **Privat bleiben**: Beide Dateien stehen in `.gitignore`. Die Figur wird also nicht mit veröffentlicht, solange man
    diese Zeilen nicht entfernt.
+4. **Unreal Engine 5 (Manny/Quinn, MetaHuman-Körper)**: `--namen ue5` benennt das UE5-Skelett auf Mixamo-Namen um
+   (`pelvis` → `Hips`, `upperarm_l` → `LeftArm` …). Zentimeter-FBX aus Unreal werden automatisch auf Meter gebracht.
+5. **Eine Figur je Projekt**: `--ziel ORDNER` schreibt die Dateien in einen Projektordner. Den Server dann mit
+   `--modell ORDNER` (und `--posen ORDNER`) starten. So bedient dieselbe Puppe mehrere Spiele.
+   ```sh
+   blender -b -P make_player_glb.py -- manny.fbx SKM_Manny_Simple_LOD0 --namen ue5 --ziel MeinSpiel/Art/puppe
+   python puppe_server.py --port 8766 --posen MeinSpiel/Art/posen --modell MeinSpiel/Art/puppe
+   ```
 
 Ein Drehknochen im Unterarm (`ForeArmTwist`) ist freiwillig, aber empfohlen. Sonst schnürt sich das Handgelenk bei
 Pronation ein. Materialien, deren Name mit `kit`, `trim` oder `hair` beginnt, werden in der Puppe eingefärbt.
@@ -126,6 +134,13 @@ Die Puppe erzeugt nur Daten, den Import baut man selbst. Bewährte Wege:
   - Daraus lokale Drehungen je Elternknochen machen und als Animationskurven schreiben.
   - Das Training speichert zyklische Bewegungen als normale Key-Folgen (`laenge_bilder`, `fps`). Man kann sie direkt
     abtasten.
+- **Unreal Engine**: Achsen der Puppe (three.js, rechtshändig: +x links, +y oben, +z vorn) → UE-Komponentenraum
+  (+X links, +Y vorn, +Z oben, linkshändig): Punkt `(x, z, y) × 100`, Drehung `(−x, −z, −y, w)`. Weltdrehung = Delta ×
+  Bindedrehung. Unreal erlaubt nur Bildraten, die Vielfache oder Teiler von 30 fps sind: Zyklen auf 30 fps umtasten.
+- **Werkzeuge** (`werkzeuge/`, brauchen Chrome oder Edge und das Python-Paket `websockets`):
+  - `zyklen_speichern.py [--port] [--detail] <namen>`: Zyklen und Moves backen und speichern, mit Bericht zu Fuß- und Bodenhöhe.
+  - `bewegung_export.py [--port] --ziel ORDNER <posen>`: je Bild die Knochendrehung gegenüber der Bindepose (engine-neutral).
+  - `kontaktbogen.py [--port] --ziel ORDNER <posen>`: Prüfbilder von vorn und von der Seite.
 - **Automatisieren** mit einem Browser ohne Fenster (headless):
   - Datei per `window.puppe.loadFile(json)` laden.
   - Keys durchgehen und die Knochen des eigenen Modells lesen (`window.puppe.player.bones`).
@@ -151,6 +166,18 @@ Die Puppe erzeugt nur Daten, den Import baut man selbst. Bewährte Wege:
 
   Die Fußbahnen werden so gelöst, dass der Standfuß nicht rutscht. Beim Nachstellschritt muss
   `2 × base − Standweg ≥ 0,1 m` bleiben, sonst kreuzen die Füße.
+- **Moves aus Schlüsselhaltungen** (`MOVES` in `training.js`): je Key Zeit, Becken `H`, Gelenkwinkel `J`, `boden`
+  (Stand/Liegen) oder Flug (Becken als Wurfparabel). Fußhaltung:
+  - `fest: ['Left']`: Fuß per Bein-IK festhalten (Schritte, Tricks). Hebt Kniebeugen auf: nicht für Sprünge.
+  - `stand: true` (ganzer Move): Füße bleiben waagerecht am Platz, das Becken weicht aus. Die Beinwinkel bleiben erhalten,
+    so gehen Kniebeuge, Abdruck und Sprung aus dem Stand.
+  - `ik: { Right: [x, y, z] }`: Fußbahn in Weltkoordinaten.
+  Hände: `ikArm` (Welt) oder `ikRel` (Handgelenk relativ zum Becken, bleibt im Flug am Körper; für Ball halten, Wurf, Pass).
+  Erfahrungen:
+  - Landungen in **Aufsetzen** (Beine fast gestreckt) und **Abfedern** teilen. Sonst sinken die Füße im letzten Flugbild ein.
+  - Handziele müssen mit der Armlänge erreichbar sein (Schulter–Handgelenk ~0,52 m), sonst bleibt die Hand stehen.
+  - Bei Zielen nah am Körper die Startwinkel so wählen, dass die gewünschte Ellbogenlage herauskommt. IK löst nur das Handgelenk.
+  Basketball-Moves (`bb_…`): Sprungwurf, Brustpass, Dribbeln im Stand und im Lauf, Verteidigung, Block, Rebound, Ball halten, Bereitschaft.
 - **Neue Gang-Sollkurven**: `GAITS` in `training.js`, also Hüft-, Knie- und Fußkurven über den Schrittzyklus aus der
   Ganganalyse-Literatur.
 - **Bitte**: Namensnennung und Lizenz beibehalten und Änderungen kenntlich machen (siehe unten).

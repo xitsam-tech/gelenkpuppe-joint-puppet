@@ -110,6 +110,10 @@ Each pose or motion is one JSON file with `"format": "gelenkpuppe"`:
    This writes `player.glb` and `player_rest.json` next to `puppe.html`. The puppet then takes over the real joint
    positions and proportions. Tick "Eigenes Modell zeigen" to see the character instead of the mannequin.
 3. Both files are in `.gitignore`. Your character stays private unless you remove those lines.
+4. **Unreal Engine 5 (Manny/Quinn, MetaHuman body)**: `--namen ue5` renames the UE5 skeleton to Mixamo names
+   (`pelvis` → `Hips`, `upperarm_l` → `LeftArm` …). Centimetre FBX files from Unreal are scaled to metres automatically.
+5. **One character per project**: `--ziel FOLDER` writes the files into a project folder; start the server with
+   `--modell FOLDER` (and `--posen FOLDER`). One puppet can serve several games.
 
 A forearm twist bone (`ForeArmTwist`) is optional but recommended, so the wrist does not candy-wrap on pronation.
 Materials whose names start with `kit`, `trim` or `hair` are tinted in the puppet. `number…` and `name…` are hidden.
@@ -123,6 +127,12 @@ The puppet only produces data. The import is up to you. Proven routes:
 - **Unity / other engines**: per frame, compute the bone rotation relative to the bind pose (world rotation × inverse
   bind rotation), turn it into local rotations per parent, and write them as animation curves. The motion trainer
   saves cyclic motions as normal key sequences (`laenge_bilder`, `fps`), so you can sample them directly.
+- **Unreal Engine**: puppet axes (three.js, right-handed: +x left, +y up, +z forward) → UE component space (+X left,
+  +Y forward, +Z up, left-handed): point `(x, z, y) × 100`, rotation `(−x, −z, −y, w)`; world = delta × bind rotation.
+  Unreal only accepts frame rates that are multiples or factors of 30 fps, so resample cycles to 30 fps.
+- **Tools** in `werkzeuge/` (need Chrome or Edge and the Python package `websockets`): `zyklen_speichern.py` bakes and
+  saves cycles and moves with a foot/ground report, `bewegung_export.py` exports per-frame bone rotations relative to
+  the bind pose (engine-neutral), `kontaktbogen.py` renders front and side contact sheets.
 - Automate it with a headless browser. Load a file through `window.puppe.loadFile(json)`, step the keys, and read the
   skinned bones of your model (`window.puppe.player.bones`). Useful hooks on `window.puppe`: `applyPose`, `setPose`,
   `analyze`, `solveIK`, `buildFile`, `wpos`, `mpos`, `setView`.
@@ -142,6 +152,12 @@ The puppet only produces data. The import is up to you. Proven routes:
   side step, keep `2 × base − stance travel ≥ 0.1 m`, so the feet never cross.
 - **New gait targets**: `GAITS` in `training.js` (hip, knee and ankle curves over the gait cycle, from gait-analysis
   literature).
+- **Moves from key poses** (`MOVES` in `training.js`): per key time, pelvis `H`, joint angles `J`, `boden` (stance/lying)
+  or flight (pelvis as a ballistic arc). Feet: `fest` holds a foot by leg IK (steps, tricks; it cancels knee bends, so not
+  for jumps); `stand: true` keeps both feet in place horizontally by shifting the pelvis while the leg angles stay (squats,
+  take-off, standing jumps); `ik` is a foot path in world space. Hands: `ikArm` (world) or `ikRel` (wrist relative to the
+  pelvis, stays with the body in flight; for holding a ball, shooting, passing). Split landings into touch-down (legs
+  almost straight) and absorption, otherwise the feet sink in the last flight frame. Basketball moves: `bb_…`.
 - Please keep the attribution and the licence, and mark your changes (see below).
 
 ## Licence

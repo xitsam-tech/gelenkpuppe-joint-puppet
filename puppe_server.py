@@ -3,7 +3,9 @@
 Liefert puppe.html aus und speichert/liest Posen als JSON im Ordner posen/ neben diesem Skript (oder --posen ORDNER).
 Nur an 127.0.0.1 gebunden (nicht im Netz erreichbar). Nur Python-Standardbibliothek.
 
-Start:  python puppe_server.py [--port 8765] [--posen ORDNER] [--no-browser]
+Eigene Figur: player.glb/player_rest.json neben diesem Skript oder aus --modell ORDNER (z. B. je Spielprojekt eine Figur).
+
+Start:  python puppe_server.py [--port 8765] [--posen ORDNER] [--modell ORDNER] [--no-browser]
 """
 import argparse
 import http.server
@@ -18,6 +20,8 @@ import webbrowser
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 POSEN = os.path.join(HERE, "posen")   # mit --posen aenderbar
+MODELL = HERE                         # Ordner mit player.glb / player_rest.json, mit --modell aenderbar
+MODELL_FILES = ("/player.glb", "/player_rest.json")
 NAME_RE = re.compile(r"^[\w\-äöüÄÖÜß ]{1,80}$")
 
 
@@ -65,6 +69,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path.split("?")[0] in ("/", "/index.html"):
             self.path = "/puppe.html" + ("?" + self.path.split("?", 1)[1] if "?" in self.path else "")
+        if self.path.split("?")[0] in MODELL_FILES and MODELL != HERE:
+            p = os.path.join(MODELL, self.path.split("?")[0].lstrip("/"))
+            if not os.path.exists(p):
+                return self._err(404, "nicht gefunden")
+            with open(p, "rb") as f:
+                body = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "model/gltf-binary" if p.endswith(".glb") else "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if not self.path.startswith("/api/posen"):
             return super().do_GET()
         name = self._name()
@@ -128,11 +144,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--posen", help="Ordner fuer die Posen-Dateien (Standard: posen/ neben diesem Skript)")
+    ap.add_argument("--modell", help="Ordner mit player.glb und player_rest.json (Standard: neben diesem Skript)")
     ap.add_argument("--no-browser", action="store_true")
     a = ap.parse_args()
     global POSEN
     if a.posen:
         POSEN = os.path.abspath(a.posen)
+    global MODELL
+    if a.modell:
+        MODELL = os.path.abspath(a.modell)
     url = f"http://127.0.0.1:{a.port}/"
     if port_busy(a.port):
         print(f"Laeuft schon: {url}")
