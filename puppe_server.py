@@ -21,7 +21,7 @@ import webbrowser
 HERE = os.path.dirname(os.path.abspath(__file__))
 POSEN = os.path.join(HERE, "posen")   # mit --posen aenderbar
 MODELL = HERE                         # Ordner mit player.glb / player_rest.json, mit --modell aenderbar
-MODELL_FILES = ("/player.glb", "/player_rest.json")
+MODELL_FILES = ("/player.glb", "/player_rest.json", "/finger_limits.json")
 NAME_RE = re.compile(r"^[\w\-äöüÄÖÜß ]{1,80}$")
 
 

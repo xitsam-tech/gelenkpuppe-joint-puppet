@@ -203,6 +203,27 @@ S('Hand', 0.13, 0.468, -0.005);                         // Tragewinkel: Unterarm
 S('UpLeg', 0.05, 0.52, 0); S('Leg', 0.05, 0.285, 0.004); S('Foot', 0.05, 0.039, -0.004);
 S('ToeBase', 0.053, 0.01, 0.087); S('ToeTip', 0.054, 0.008, 0.117); S('Heel', 0.05, 0.008, -0.035);
 const playerRest = await fetch('player_rest.json').then(r => r.ok ? r.json() : null).catch(() => null);
+// Haut auf Haut (07.11.2026): Beugegrenzen je Finger und Daumen (Grad), am gewichteten Hautnetz des eigenen Modells gemessen
+// (Beugen bis zur ersten Beruehrung), optional als finger_limits.json neben player.glb. Ohne sie stachen bei der Faust
+// Fingerkuppen durch den Handballen und der Daumen durch den Zeigefinger. Fehlt die Datei, gelten nur die Gelenkgrenzen.
+const fingerLimits = await fetch('finger_limits.json').then(r => r.ok ? r.json() : null).catch(() => null);
+function contactClamp() {
+  if (!fingerLimits) return;
+  for (const s of ['Left', 'Right']) {
+    const L = fingerLimits[s]; if (!L) continue;
+    const rf = fingerLimits.verhaeltnis_finger, rt = fingerLimits.verhaeltnis_daumen;
+    for (const n of ['Index', 'Middle', 'Ring', 'Pinky']) {
+      const a = [1, 2, 3].map(k => pose.j[s + n + k]); if (a.some(x => !x)) continue;
+      const sum = a.reduce((t, x) => t + Math.max(0, x.beug), 0), max = L[n] * (rf[0] + rf[1] + rf[2]);
+      if (sum > max) { const f = max / sum; a.forEach(x => { if (x.beug > 0) x.beug *= f; }); }
+    }
+    const t1 = pose.j[s + 'Thumb1'], t2 = pose.j[s + 'Thumb2'], t3 = pose.j[s + 'Thumb3'];
+    if (t1 && t2 && t3) {
+      const sum = Math.max(0, t1.gegen) + Math.max(0, t2.beug) + Math.max(0, t3.beug), max = L.Thumb * (rt[0] + rt[1] + rt[2]);
+      if (sum > max) { const f = max / sum; if (t1.gegen > 0) t1.gegen *= f; if (t2.beug > 0) t2.beug *= f; if (t3.beug > 0) t3.beug *= f; }
+    }
+  }
+}
 if (playerRest) {
   const g = playerRest._boden;
   const B = n => { const h = playerRest[n].head; return V(h[0] / H, (h[2] - g) / H, -h[1] / H); };
@@ -255,7 +276,15 @@ if (playerRest) {
   P.ThumbTip = P.Thumb3.clone().addScaledVector(d3.normalize(), map(bt('LeftThumb3')).distanceTo(P.Thumb3) || 0.015);
   tD = P.Thumb3.clone().sub(P.Thumb1).normalize();
 }
-const kOpp = tD.clone().cross(nP).normalize();                  // Daumen zur Handfläche
+let kOpp = tD.clone().cross(nP).normalize();                    // Daumen zur Handfläche
+if (playerRest) {
+  // Beugeachse aus dem Spieler: der Daumen beugt sich zu einem Punkt ~2,5 cm vor den Knöcheln von Zeige- und
+  // Mittelfinger (Handflächenseite), dort liegen bei der Faust deren Mittelglieder (07.11.2026; vorher klappte er
+  // mit der festen Formel seitlich nach unten statt über die Finger)
+  const tgt = P.Index1.clone().add(P.Middle1).multiplyScalar(0.5).addScaledVector(nP, 0.025 / H);
+  const u = tgt.sub(P.Thumb1); u.addScaledVector(tD, -u.dot(tD));
+  if (u.lengthSq() > 1e-10) kOpp = tD.clone().cross(u.normalize()).normalize();
+}
 
 // ---------------- Gelenke mit anatomischen Bewegungsumfängen (Grad)
 const d = (k, l, min, max) => ({ k, l, min, max });
@@ -374,6 +403,13 @@ ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground)
 const grid = new THREE.GridHelper(10, 40, 0x999999, 0xcccccc); grid.material.transparent = true; grid.material.opacity = 0.45; scene.add(grid);
 // Pfeil "vorn" am Boden
 const arrow = new THREE.ArrowHelper(AZ, V(0, 0.002, 0.25), 0.25, 0x555555, 0.07, 0.05); scene.add(arrow);
+// Ball (z. B. Basketball, Fussball) fuer Griffe und Pruefbilder: window.puppe.setBall([x, y, z] | null, radius)
+const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshStandardMaterial({ color: 0xd4561c, roughness: 0.7 }));
+ballMesh.castShadow = true; ballMesh.visible = false; scene.add(ballMesh);
+function setBall(pos, r = 0.12) {
+  ballMesh.visible = !!pos;
+  if (pos) { ballMesh.position.set(pos[0], pos[1], pos[2]); ballMesh.scale.setScalar(r); }
+}
 
 function themeColors() {
   const dark = matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light';
@@ -522,9 +558,9 @@ function drivePlayer() {
       }
     }
     if (j.base.startsWith('Thumb')) {
-      // Im Modell ist die Handflaeche an den Daumenknochen gebunden: Dreht er voll mit, reisst sie auf.
-      // Der Spieler zeigt deshalb nur ein Viertel, die Winkel der Puppe bleiben davon unberuehrt.
-      const t1 = pose.j[j.side + 'Thumb1'], F = 0.25;
+      // Volle Daumendrehung (07.11.2026). Frueher zeigte das Modell nur ein Viertel, weil die Handflaeche an den
+      // Daumenknochen gebunden war und sonst aufriss; bei sauber gewichtetem Daumen dreht er voll mit.
+      const t1 = pose.j[j.side + 'Thumb1'], F = 1.0;
       let part = qm(qa(kOpp, t1.gegen * F), qa(nP, t1.spreiz * F));
       if (j.base !== 'Thumb1') part = part.clone().multiply(qa(kOpp, pose.j[j.side + 'Thumb2'].beug * F));
       if (j.base === 'Thumb3') part = part.clone().multiply(qa(kOpp, pose.j[j.side + 'Thumb3'].beug * F));
@@ -599,6 +635,7 @@ function markMannequin() {
 
 // ---------------- Pose anwenden
 function applyPose() {
+  contactClamp();
   const h = pose.j.Hips;
   groups.Hips.position.copy(restPos('Hips', '')).add(V(h.x / 100, h.y / 100, h.z / 100));
   for (const j of J) groups[j.id].quaternion.copy(localQ(j));
@@ -940,6 +977,7 @@ function solveDofs(dofs, goals) {
   applyPose();
 }
 function applyPoseFast() {
+  contactClamp();
   const h = pose.j.Hips;
   groups.Hips.position.copy(restPos('Hips', '')).add(V(h.x / 100, h.y / 100, h.z / 100));
   for (const j of J) groups[j.id].quaternion.copy(localQ(j));
@@ -1362,7 +1400,7 @@ function resize() { const r = view.getBoundingClientRect(); renderer.setSize(r.w
 addEventListener('resize', resize);
 loadLocal();
 clampAll(); applyPose(); groundIt(); resize(); setView('q'); setMode('ik'); queueRefresh(); listFiles();
-window.puppe = { applyPoseFast, mpos, clampAll, player, camera, scene, orbit, get pose() { return pose; }, J, applyPose, analyze, solveIK, buildFile, loadFile, wpos, setView, setMode, afterChange, groundIt, opts, V, setPose: j => { pose.j = j; afterChange(null); } };
+window.puppe = { setBall, applyPoseFast, mpos, clampAll, player, camera, scene, orbit, get pose() { return pose; }, J, applyPose, analyze, solveIK, buildFile, loadFile, wpos, setView, setMode, afterChange, groundIt, opts, V, setPose: j => { pose.j = j; afterChange(null); } };
 if (new URLSearchParams(location.search).has('training')) import('./training.js');
 renderer.setAnimationLoop(() => {
   if (playing) {
