@@ -1080,6 +1080,28 @@ const MOVES = {
              LeftFoot: { heb: 8 }, RightFoot: { heb: 8 }, Neck: { beug: -14 }, RightArm: { ebene: 60, heben: 25 }, LeftArm: { ebene: 80, heben: 30 },
              RightForeArm: { beug: 110, dreh: -40 }, LeftForeArm: { beug: 115, dreh: -40 }, RightHand: { beug: -15 } }) })),
   },
+  // Zuschauer sitzt auf einem Stuhl (Schleife): Huefte ~96, Knie ~108 Grad (Fuesse etwas unter den Sitz gezogen, passt auf eine
+  // 87 cm tiefe Tribuenenstufe), Oberschenkel waagerecht, Sohlen flach,
+  // Becken leicht nach hinten gekippt, Rumpf lehnt etwas an, Haende ruhen locker auf den Oberschenkeln. Leichtes Atmen.
+  // Sitzhoehe (Sohle bis Gesaess) misst das Spiel am gebackenen Modell und passt den Stuhl an.
+  bb_sitzen: {
+    period: 3.0, fusshaltung: true, stand: true,
+    keys: [0, 1.5, 3.0].map((t, n) => ({ t, boden: true, hand: 35, H: { x: 0, z: 0, vor: -6 },
+      ikRel: { Right: [-0.14, 0.04, 0.30], Left: [0.14, 0.04, 0.30] },
+      J: L({ LeftUpLeg: { beug: 96, spreiz: 7 }, RightUpLeg: { beug: 96, spreiz: 7 }, LeftLeg: { beug: 108 }, RightLeg: { beug: 108 },
+             LeftFoot: { heb: -12 }, RightFoot: { heb: -12 }, Spine: { beug: 4 }, Spine2: { beug: [2, 0, 2][n] }, Neck: { beug: 4 },
+             LeftArm: { ebene: 30, heben: 18 }, RightArm: { ebene: 30, heben: 18 }, LeftForeArm: { beug: 70, dreh: 20 }, RightForeArm: { beug: 70, dreh: 20 } }) })),
+  },
+  // Sitzend klatschen: Unterkoerper wie bb_sitzen, Rumpf leicht vor, Haende vor der Brust (~30 cm vor dem Brustbein),
+  // Handflaechen zueinander; Key 0 = Haende auseinander, Key bei 0,25 s = Haende zusammen (das Spiel wechselt die gebackenen Haltungen).
+  bb_sitzen_klatschen: {
+    period: 0.5, fusshaltung: true, stand: true,
+    keys: [0, 0.25, 0.5].map((t, n) => ({ t, boden: true, hand: 12, H: { x: 0, z: 0, vor: -6 },
+      ikRel: n === 1 ? { Right: [-0.035, 0.40, 0.32], Left: [0.035, 0.40, 0.32] } : { Right: [-0.17, 0.42, 0.28], Left: [0.17, 0.42, 0.28] },
+      J: L({ LeftUpLeg: { beug: 96, spreiz: 7 }, RightUpLeg: { beug: 96, spreiz: 7 }, LeftLeg: { beug: 108 }, RightLeg: { beug: 108 },
+             LeftFoot: { heb: -12 }, RightFoot: { heb: -12 }, Spine: { beug: 12 }, Neck: { beug: -4 },
+             LeftArm: { ebene: 80, heben: 45 }, RightArm: { ebene: 80, heben: 45 }, LeftForeArm: { beug: 95, dreh: 10 }, RightForeArm: { beug: 95, dreh: 10 } }) })),
+  },
 };
 
 const moveBake = {};
