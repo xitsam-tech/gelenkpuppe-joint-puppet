@@ -1088,6 +1088,193 @@ const MOVES = {
   // 0,50 Absprung vom linken Fuss, rechtes Knie schwingt hoch (Oberschenkel waagerecht), Ball an der rechten Schulter
   // 0,74 hoechster Punkt: rechter Arm gestreckt nach vorn oben, Ball verlaesst die Fingerspitzen; linke Hand schuetzt seitlich
   // 1,00 Landung auf beiden Fuessen, abfedern, Stand. Flug 0,5 s (~31 cm Sprunghoehe).
+  // Spin Move (Reverse Pivot) im Dribbling: linker Fuss ist Standbein und bleibt am Platz, der Koerper dreht sich einmal ganz um
+  // ihn (ueber links, Ruecken zum Verteidiger), der rechte Fuss schwingt im Kreis herum und setzt nach der halben Drehung kurz auf;
+  // die rechte Hand zieht den Ball eng an die Huefte (geschuetzt), der linke Arm geht zur Balance seitlich. Hand- und Fussziele drehen
+  // mit dem Becken (H.dreh). Auf der Stelle gebacken: das Spiel versetzt den Spieler am Verteidiger vorbei.
+  bb_spin: {
+    period: 0.6, fusshaltung: true,
+    keys: [
+      { t: 0, boden: true, hand: 25, H: { x: 0, z: 0, vor: 10, dreh: 0 },
+        ik: { Left: [0.10, 0.09, 0.02], Right: [-0.24, 0.09, -0.1] },
+        ikRel: { Right: [-0.24, 0.02, 0.06], Left: [0.36, 0.22, 0.08] },
+        J: L({ LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 50 }, RightUpLeg: { beug: 35 }, RightLeg: { beug: 60 }, Spine: { beug: 10 }, Neck: { beug: -8 },
+               RightArm: { ebene: 30, heben: 20 }, LeftArm: { ebene: 10, heben: 55 }, RightForeArm: { beug: 70, dreh: -40 }, LeftForeArm: { beug: 30 } }) },
+      { t: 0.12, boden: true, hand: 25, H: { x: 0, z: 0, vor: 14, dreh: 90 },
+        ik: { Left: [0.10, 0.09, 0.02], Right: [-0.1, 0.17, 0.24] },
+        ikRel: { Right: [0.06, 0.02, 0.24], Left: [0.08, 0.22, -0.36] },
+        J: L({ LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 50 }, RightUpLeg: { beug: 35 }, RightLeg: { beug: 60 }, Spine: { beug: 10 }, Neck: { beug: -8 },
+               RightArm: { ebene: 30, heben: 20 }, LeftArm: { ebene: 10, heben: 55 }, RightForeArm: { beug: 70, dreh: -40 }, LeftForeArm: { beug: 30 } }) },
+      { t: 0.24, boden: true, hand: 25, H: { x: 0, z: 0, vor: 14, dreh: 180 },
+        ik: { Left: [0.10, 0.09, 0.02], Right: [0.24, 0.1, 0.1] },
+        ikRel: { Right: [0.24, 0.02, -0.06], Left: [-0.36, 0.22, -0.08] },
+        J: L({ LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 50 }, RightUpLeg: { beug: 35 }, RightLeg: { beug: 60 }, Spine: { beug: 10 }, Neck: { beug: -8 },
+               RightArm: { ebene: 30, heben: 20 }, LeftArm: { ebene: 10, heben: 55 }, RightForeArm: { beug: 70, dreh: -40 }, LeftForeArm: { beug: 30 } }) },
+      { t: 0.36, boden: true, hand: 25, H: { x: 0, z: 0, vor: 14, dreh: 270 },
+        ik: { Left: [0.10, 0.09, 0.02], Right: [0.1, 0.17, -0.24] },
+        ikRel: { Right: [-0.06, 0.02, -0.24], Left: [-0.08, 0.22, 0.36] },
+        J: L({ LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 50 }, RightUpLeg: { beug: 35 }, RightLeg: { beug: 60 }, Spine: { beug: 10 }, Neck: { beug: -8 },
+               RightArm: { ebene: 30, heben: 20 }, LeftArm: { ebene: 10, heben: 55 }, RightForeArm: { beug: 70, dreh: -40 }, LeftForeArm: { beug: 30 } }) },
+      { t: 0.48, boden: true, hand: 25, H: { x: 0, z: 0, vor: 14, dreh: 360 },
+        ik: { Left: [0.10, 0.09, 0.02], Right: [-0.24, 0.09, -0.1] },
+        ikRel: { Right: [-0.24, 0.02, 0.06], Left: [0.36, 0.22, 0.08] },
+        J: L({ LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 50 }, RightUpLeg: { beug: 35 }, RightLeg: { beug: 60 }, Spine: { beug: 10 }, Neck: { beug: -8 },
+               RightArm: { ebene: 30, heben: 20 }, LeftArm: { ebene: 10, heben: 55 }, RightForeArm: { beug: 70, dreh: -40 }, LeftForeArm: { beug: 30 } }) },
+      { t: 0.6, boden: true, hand: 25, H: { x: 0, z: 0, vor: 10, dreh: 360 },
+        ik: { Left: [0.10, 0.09, 0.02], Right: [-0.24, 0.09, -0.1] },
+        ikRel: { Right: [-0.24, 0.02, 0.06], Left: [0.36, 0.22, 0.08] },
+        J: L({ LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 50 }, RightUpLeg: { beug: 35 }, RightLeg: { beug: 60 }, Spine: { beug: 10 }, Neck: { beug: -8 },
+               RightArm: { ebene: 30, heben: 20 }, LeftArm: { ebene: 10, heben: 55 }, RightForeArm: { beug: 70, dreh: -40 }, LeftForeArm: { beug: 30 } }) },
+    ],
+  },
+  // Step-Back aus dem Dribbling: linker (vorderer) Fuss stemmt sich vorn ein, Abstoss mit beiden Beinen nach hinten (kurzer Flug),
+  // beidbeinige Landung schulterbreit, dabei nehmen beide Haende den Ball vor die Brust auf (Ausgangshaltung fuer den Sprungwurf).
+  // Auf der Stelle gebacken: das Spiel versetzt den Spieler ~1 m nach hinten (weg vom Verteidiger).
+  bb_stepback: {
+    period: 0.6, fusshaltung: true,
+    keys: [
+      { t: 0, boden: true, hand: 25, H: { x: 0, z: 0, vor: 12 },
+        ik: { Right: [-0.15, 0.09, -0.10], Left: [0.13, 0.09, 0.14] },
+        ikRel: { Right: [-0.30, -0.06, 0.30], Left: [0.24, 0.05, 0.20] },
+        J: L({ RightUpLeg: { beug: 30 }, RightLeg: { beug: 45 }, LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 45 }, Spine: { beug: 6 },
+               RightArm: { ebene: 40, heben: 25 }, LeftArm: { ebene: 50, heben: 30 }, RightForeArm: { beug: 40, dreh: -60 }, LeftForeArm: { beug: 60 } }) },
+      // Stemmschritt: linker Fuss weit vorn, Rumpf vor, Ball wird mit beiden Haenden aufgenommen
+      { t: 0.14, boden: true, hand: 20, H: { x: 0, z: 0, vor: 18 },
+        ik: { Right: [-0.15, 0.11, -0.04], Left: [0.13, 0.09, 0.38] },
+        ikRel: { Right: [-0.18, 0.06, 0.32], Left: [0.06, 0.08, 0.32] },
+        J: L({ RightUpLeg: { beug: 30 }, RightLeg: { beug: 55 }, LeftUpLeg: { beug: 60 }, LeftLeg: { beug: 60 }, Spine: { beug: 10 },
+               RightArm: { ebene: 70, heben: 30 }, LeftArm: { ebene: 80, heben: 30 }, RightForeArm: { beug: 90, dreh: -40 }, LeftForeArm: { beug: 95, dreh: -40 } }) },
+      // Abstoss und kurzer Flug nach hinten: Fuesse bleiben vor dem Becken (der Koerper faehrt zurueck)
+      { t: 0.27, boden: false, hand: 18, H: { x: 0, z: 0, vor: 8 },
+        ik: { Right: [-0.15, 0.19, 0.18], Left: [0.14, 0.19, 0.32] },
+        ikRel: { Right: [-0.15, 0.20, 0.26], Left: [0.08, 0.22, 0.28] },
+        J: L({ RightUpLeg: { beug: 35 }, RightLeg: { beug: 40 }, LeftUpLeg: { beug: 45 }, LeftLeg: { beug: 40 }, Spine: { beug: 5 },
+               RightArm: { ebene: 70, heben: 30 }, LeftArm: { ebene: 75, heben: 30 }, RightForeArm: { beug: 110, dreh: -30 }, LeftForeArm: { beug: 110, dreh: -40 } }) },
+      // Landung beidbeinig, Knie fangen ab, Ball an der Brust
+      { t: 0.40, boden: true, hand: 15, H: { x: 0, z: 0, vor: 10 },
+        ik: { Right: [-0.15, 0.09, 0.14], Left: [0.15, 0.09, 0.24] },
+        ikRel: { Right: [-0.15, 0.20, 0.24], Left: [0.09, 0.24, 0.26] },
+        J: L({ RightUpLeg: { beug: 45 }, RightLeg: { beug: 60 }, LeftUpLeg: { beug: 45 }, LeftLeg: { beug: 60 }, Spine: { beug: 6 },
+               RightArm: { ebene: 70, heben: 30 }, LeftArm: { ebene: 70, heben: 30 }, RightForeArm: { beug: 110, dreh: -30 }, LeftForeArm: { beug: 110, dreh: -40 } }) },
+      // Grundstellung wie zu Beginn des Sprungwurfs (bb_sprungwurf Key 0)
+      { t: 0.6, boden: true, hand: 15, H: { x: 0, z: 0, vor: 6 },
+        ik: { Right: [-0.14, 0.09, 0.02], Left: [0.14, 0.09, 0.08] },
+        ikRel: { Right: [-0.15, 0.24, 0.22], Left: [0.09, 0.28, 0.25] },
+        J: L({ LeftUpLeg: { beug: 18, spreiz: 4 }, RightUpLeg: { beug: 18, spreiz: 4 }, LeftLeg: { beug: 25 }, RightLeg: { beug: 25 }, Spine: { beug: 4 },
+               RightArm: { ebene: 70, heben: 30, dreh: 0 }, LeftArm: { ebene: 70, heben: 30 }, RightForeArm: { beug: 110, dreh: -30 }, LeftForeArm: { beug: 110, dreh: -40 }, RightHand: { beug: -20 } }) },
+    ],
+  },
+  // Crossover (rechts -> links) im Dribbling: rechter Fuss setzt breit und tief auf (Stemmschritt, Schienbein schraeg), die rechte
+  // Hand drueckt den Ball tief vor den Knien quer zur linken Seite (Aufprall mittig vor dem Koerper), die linke Hand nimmt ihn
+  // bei ~0,30 s auf; Abstoss vom rechten Fuss, linker Fuss landet breit links. Auf der Stelle gebacken (das Spiel versetzt den
+  // Spieler schraeg nach links). Gegenrichtung (links -> rechts) = gespiegelt importiert.
+  bb_crossover: {
+    period: 0.56, fusshaltung: true,
+    keys: [
+      { t: 0, boden: true, hand: 25, H: { x: 0, z: 0, vor: 14 },
+        ik: { Right: [-0.18, 0.09, 0.12], Left: [0.14, 0.11, -0.12] },
+        ikRel: { Right: [-0.30, -0.06, 0.30], Left: [0.26, 0.05, 0.20] },
+        J: L({ RightUpLeg: { beug: 40 }, RightLeg: { beug: 50 }, LeftUpLeg: { beug: 20 }, LeftLeg: { beug: 45 }, Spine: { beug: 8 }, Neck: { beug: -10 },
+               RightArm: { ebene: 40, heben: 25 }, LeftArm: { ebene: 50, heben: 30 }, RightForeArm: { beug: 40, dreh: -60 }, LeftForeArm: { beug: 60 } }) },
+      // Stemmschritt rechts breit, Becken tief; Ball wird tief quer vor die Knie gedrueckt
+      { t: 0.15, boden: true, hand: 25, H: { x: -4, z: 0, vor: 18, seit: 4 },
+        ik: { Right: [-0.42, 0.09, 0.14], Left: [0.10, 0.15, -0.14] },
+        ikRel: { Right: [-0.10, -0.28, 0.40], Left: [0.26, 0.00, 0.26] },
+        J: L({ RightUpLeg: { beug: 55, spreiz: 20 }, RightLeg: { beug: 70 }, LeftUpLeg: { beug: 15 }, LeftLeg: { beug: 60 }, Spine: { beug: 10 }, Neck: { beug: -12 },
+               RightArm: { ebene: 80, heben: 30 }, LeftArm: { ebene: 50, heben: 30 }, RightForeArm: { beug: 25, dreh: -80 }, LeftForeArm: { beug: 50 } }) },
+      // Ball kommt links an, Abstoss vom rechten Fuss (Ferse hebt), Becken wandert nach links
+      { t: 0.30, boden: true, hand: 25, H: { x: 6, z: 0, vor: 16, seit: -4 },
+        ik: { Right: [-0.40, 0.12, 0.08], Left: [0.22, 0.16, 0.02] },
+        ikRel: { Right: [-0.22, -0.04, 0.32], Left: [0.30, -0.16, 0.36] },
+        J: L({ RightUpLeg: { beug: 30, spreiz: 20 }, RightLeg: { beug: 30 }, RightFoot: { heb: -25 }, LeftUpLeg: { beug: 35 }, LeftLeg: { beug: 50 }, Spine: { beug: 10 }, Neck: { beug: -12 },
+               RightArm: { ebene: 50, heben: 30 }, LeftArm: { ebene: 60, heben: 30 }, RightForeArm: { beug: 50 }, LeftForeArm: { beug: 30, dreh: -70 } }) },
+      // linker Fuss landet breit links
+      { t: 0.42, boden: true, hand: 25, H: { x: 10, z: 0, vor: 15, seit: -3 },
+        ik: { Right: [-0.24, 0.16, -0.10], Left: [0.40, 0.09, 0.14] },
+        ikRel: { Right: [-0.22, 0.04, 0.24], Left: [0.32, -0.06, 0.32] },
+        J: L({ RightUpLeg: { beug: 10 }, RightLeg: { beug: 50 }, LeftUpLeg: { beug: 50, spreiz: 20 }, LeftLeg: { beug: 65 }, Spine: { beug: 9 }, Neck: { beug: -10 },
+               RightArm: { ebene: 50, heben: 30 }, LeftArm: { ebene: 45, heben: 25 }, RightForeArm: { beug: 60 }, LeftForeArm: { beug: 40, dreh: -60 } }) },
+      // Grundstellung zum Weiterdribbeln mit links (Spiegelbild des Anfangs)
+      { t: 0.56, boden: true, hand: 25, H: { x: 8, z: 0, vor: 14 },
+        ik: { Right: [-0.10, 0.11, -0.12], Left: [0.26, 0.09, 0.12] },
+        ikRel: { Right: [-0.26, 0.05, 0.20], Left: [0.30, -0.06, 0.30] },
+        J: L({ RightUpLeg: { beug: 20 }, RightLeg: { beug: 45 }, LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 50 }, Spine: { beug: 8 }, Neck: { beug: -10 },
+               RightArm: { ebene: 50, heben: 30 }, LeftArm: { ebene: 40, heben: 25 }, RightForeArm: { beug: 60 }, LeftForeArm: { beug: 40, dreh: -60 } }) },
+    ],
+  },
+  // Dunk aus dem Lauf (einhaendig vorbereitet, beidhaendig gestopft): Anlauf wie beim Korbleger (Gather rechts, Stemmschritt links),
+  // Absprung links mit hochschwingendem rechten Knie, aber hoeher (Flug 0,6 s, ~44 cm Schwerpunkt-Hub) und beide Haende fuehren den
+  // Ball ueber den Kopf hinter die Stirn (Ausholen), am hoechsten Punkt (0,80 s) wird er nach vorn unten in den Ring gedrueckt,
+  // die Arme folgen nach unten; Landung beidbeinig bei 1,10 s, weich abfedern. Auf der Stelle gebacken wie bb_korbleger.
+  bb_dunk: {
+    period: 1.5, fusshaltung: true,
+    keys: [
+      { t: 0, boden: true, hand: 20, H: { x: 0, z: 0, vor: 14 },
+        ik: { Right: [-0.10, 0.09, 0.30], Left: [0.10, 0.16, -0.45] },
+        ikRel: { Right: [-0.22, 0.12, 0.20], Left: [-0.02, 0.15, 0.30] },
+        J: L({ RightUpLeg: { beug: 35 }, RightLeg: { beug: 20 }, LeftUpLeg: { beug: -15 }, LeftLeg: { beug: 55 }, Spine: { beug: 6 },
+               RightArm: { ebene: 40, heben: 25 }, LeftArm: { ebene: 80, heben: 30 }, RightForeArm: { beug: 100, dreh: -30 }, LeftForeArm: { beug: 110, dreh: -40 } }) },
+      { t: 0.12, boden: true, hand: 20, H: { x: 0, z: 0, vor: 14 },
+        ik: { Right: [-0.10, 0.09, -0.12], Left: [0.10, 0.30, -0.05] },
+        ikRel: { Right: [-0.20, 0.18, 0.24], Left: [-0.02, 0.22, 0.32] },
+        J: L({ RightUpLeg: { beug: 15 }, RightLeg: { beug: 40 }, LeftUpLeg: { beug: 40 }, LeftLeg: { beug: 85 }, Spine: { beug: 6 },
+               RightArm: { ebene: 45, heben: 28 }, LeftArm: { ebene: 80, heben: 32 }, RightForeArm: { beug: 105, dreh: -30 }, LeftForeArm: { beug: 110, dreh: -40 } }) },
+      { t: 0.22, boden: true, hand: 20, H: { x: 0, z: 0, vor: 12 },
+        ik: { Right: [-0.10, 0.12, -0.49], Left: [0.10, 0.20, 0.30] },
+        ikRel: { Right: [-0.19, 0.25, 0.27], Left: [-0.03, 0.29, 0.32] },
+        J: L({ RightUpLeg: { beug: -15 }, RightLeg: { beug: 30 }, LeftUpLeg: { beug: 45 }, LeftLeg: { beug: 40 }, Spine: { beug: 6 },
+               RightArm: { ebene: 55, heben: 30 }, LeftArm: { ebene: 80, heben: 35 }, RightForeArm: { beug: 110, dreh: -30 }, LeftForeArm: { beug: 110, dreh: -40 } }) },
+      // linker Fuss setzt vor dem Koerper auf und stemmt (Becken tief)
+      { t: 0.28, boden: true, hand: 20, H: { x: 0, z: 0, vor: 10 },
+        ik: { Right: [-0.10, 0.22, -0.40], Left: [0.10, 0.09, 0.36] },
+        ikRel: { Right: [-0.18, 0.30, 0.28], Left: [-0.03, 0.34, 0.32] },
+        J: L({ RightUpLeg: { beug: -5 }, RightLeg: { beug: 70 }, LeftUpLeg: { beug: 35 }, LeftLeg: { beug: 25 }, Spine: { beug: 5 },
+               RightArm: { ebene: 60, heben: 32 }, LeftArm: { ebene: 80, heben: 38 }, RightForeArm: { beug: 110, dreh: -30 }, LeftForeArm: { beug: 110, dreh: -40 } }) },
+      { t: 0.40, boden: true, hand: 18, H: { x: 0, z: 0, vor: 8 },
+        ik: { Right: [-0.10, 0.32, -0.02], Left: [0.10, 0.09, 0.05] },
+        ikRel: { Right: [-0.18, 0.45, 0.28], Left: [-0.02, 0.48, 0.30] },
+        J: L({ RightUpLeg: { beug: 55 }, RightLeg: { beug: 95 }, LeftUpLeg: { beug: 35 }, LeftLeg: { beug: 50 }, Spine: { beug: 4 },
+               RightArm: { ebene: 75, heben: 50 }, LeftArm: { ebene: 80, heben: 50 }, RightForeArm: { beug: 110, dreh: -40 }, LeftForeArm: { beug: 105, dreh: -40 } }) },
+      { t: 0.50, boden: true, hand: 15, H: { x: 0, z: 0, vor: 4 },
+        ik: { Right: [-0.10, 0.50, 0.28], Left: [0.10, 0.17, -0.22] },
+        ikRel: { Right: [-0.13, 0.80, 0.30], Left: [0.13, 0.80, 0.30] },
+        J: L({ RightUpLeg: { beug: 95 }, RightLeg: { beug: 95 }, LeftUpLeg: { beug: -5 }, LeftLeg: { beug: 5 }, LeftFoot: { heb: -35 }, Spine: { beug: 2 }, Neck: { beug: -8 },
+               RightArm: { ebene: 90, heben: 110 }, LeftArm: { ebene: 90, heben: 110 }, RightForeArm: { beug: 90, dreh: -40 }, LeftForeArm: { beug: 90, dreh: -40 } }) },
+      // Ausholen im Steigen: Ball mit beiden Haenden ueber und leicht hinter die Stirn
+      { t: 0.66, boden: false, hand: 15, H: { x: 0, z: 0, vor: -2 },
+        ik: { Right: [-0.10, 0.52, 0.34], Left: [0.10, 0.16, -0.18] },
+        ikRel: { Right: [-0.12, 1.10, 0.22], Left: [0.12, 1.10, 0.22] },
+        J: L({ RightUpLeg: { beug: 85 }, RightLeg: { beug: 90 }, LeftUpLeg: { beug: 0 }, LeftLeg: { beug: 30 }, LeftFoot: { heb: -30 }, Spine: { beug: -4 }, Neck: { beug: -14 },
+               RightArm: { ebene: 90, heben: 160 }, LeftArm: { ebene: 90, heben: 160 }, RightForeArm: { beug: 70, dreh: -20 }, LeftForeArm: { beug: 70, dreh: -20 } }) },
+      // Stopfen am hoechsten Punkt: Arme klappen nach vorn, Ball vor und ueber dem Kopf in den Ring
+      { t: 0.80, boden: false, hand: 12, H: { x: 0, z: 0, vor: 6 },
+        ik: { Right: [-0.10, 0.44, 0.36], Left: [0.10, 0.14, -0.10] },
+        ikRel: { Right: [-0.11, 1.06, 0.55], Left: [0.11, 1.06, 0.55] },
+        J: L({ RightUpLeg: { beug: 70 }, RightLeg: { beug: 80 }, LeftUpLeg: { beug: 10 }, LeftLeg: { beug: 30 }, Spine: { beug: 10 }, Neck: { beug: -6 },
+               RightArm: { ebene: 90, heben: 140 }, LeftArm: { ebene: 90, heben: 140 }, RightForeArm: { beug: 15 }, LeftForeArm: { beug: 15 }, RightHand: { beug: 40 }, LeftHand: { beug: 40 } }) },
+      { t: 0.95, boden: false, hand: 25, H: { x: 0, z: 0, vor: 8 },
+        ik: { Right: [-0.11, 0.26, 0.22], Left: [0.11, 0.15, 0.04] },
+        ikRel: { Right: [-0.16, 0.78, 0.48], Left: [0.16, 0.78, 0.48] },
+        J: L({ RightUpLeg: { beug: 40 }, RightLeg: { beug: 50 }, LeftUpLeg: { beug: 20 }, LeftLeg: { beug: 30 }, Spine: { beug: 10 },
+               RightArm: { ebene: 90, heben: 100 }, LeftArm: { ebene: 90, heben: 100 }, RightForeArm: { beug: 20 }, LeftForeArm: { beug: 20 }, RightHand: { beug: 30 }, LeftHand: { beug: 30 } }) },
+      // Landung beidbeinig, abfedern, Stand
+      { t: 1.10, boden: true, hand: 25, H: { x: 0, z: 0, vor: 8 },
+        ik: { Right: [-0.12, 0.09, 0.14], Left: [0.12, 0.09, 0.08] },
+        ikRel: { Right: [-0.20, 0.50, 0.34], Left: [0.20, 0.50, 0.34] },
+        J: L({ RightUpLeg: { beug: 25 }, RightLeg: { beug: 30 }, LeftUpLeg: { beug: 25 }, LeftLeg: { beug: 30 },
+               RightArm: { ebene: 70, heben: 60 }, LeftArm: { ebene: 70, heben: 60 }, RightForeArm: { beug: 40 }, LeftForeArm: { beug: 40 } }) },
+      { t: 1.24, boden: true, hand: 25, H: { x: 0, z: 0, vor: 16 },
+        ik: { Right: [-0.12, 0.09, 0.14], Left: [0.12, 0.09, 0.08] },
+        ikRel: { Right: [-0.22, 0.32, 0.22], Left: [0.22, 0.32, 0.22] },
+        J: L({ RightUpLeg: { beug: 55 }, RightLeg: { beug: 70 }, LeftUpLeg: { beug: 55 }, LeftLeg: { beug: 70 },
+               RightArm: { ebene: 60, heben: 40 }, LeftArm: { ebene: 60, heben: 40 }, RightForeArm: { beug: 50 }, LeftForeArm: { beug: 50 } }) },
+      { t: 1.5, boden: true, hand: 25, H: { x: 0, z: 0, vor: 4 },
+        ik: { Right: [-0.12, 0.09, 0.10], Left: [0.12, 0.09, 0.06] },
+        ikRel: { Right: [-0.24, 0.10, 0.12], Left: [0.24, 0.10, 0.12] },
+        J: L({ RightUpLeg: { beug: 14 }, RightLeg: { beug: 20 }, LeftUpLeg: { beug: 14 }, LeftLeg: { beug: 20 },
+               RightArm: { ebene: 40, heben: 25 }, LeftArm: { ebene: 40, heben: 25 }, RightForeArm: { beug: 40 }, LeftForeArm: { beug: 40 } }) },
+    ],
+  },
   bb_korbleger: {
     period: 1.4, fusshaltung: true,
     keys: [
