@@ -1574,6 +1574,15 @@ function bakeMove(name) {
   const H0 = p.wpos('Hips').clone();
   const frames = [], ground = [], report = [];
   let feet = { Left: null, Right: null }, lastFest = null, standRef = null;
+  // Arm-IK zeitlich stetig: jedes Bild startet bei der Armloesung des Bilds davor. Sonst sprang die Loesung je nach Startwinkel
+  // zwischen zwei gleichwertigen Armstellungen (Sprungwurf: Fuehrarm in einem Bild von vorn-unten nach oben, ~150 Grad = Flattern).
+  const armPrev = { Left: null, Right: null };
+  const armIK = (sd, target) => {
+    const A = j[sd + 'Arm'], Fa = j[sd + 'ForeArm'];
+    if (armPrev[sd]) { [A.ebene, A.heben, Fa.beug] = armPrev[sd]; p.applyPose(); }
+    p.solveIK(sd, 'arm', target);
+    armPrev[sd] = [A.ebene, A.heben, Fa.beug];
+  };
   for (let i = 0; i <= F; i++) {
     const t = Math.min(i / F * c.period, c.period), a = seg(t), b = a + 1;
     const u = clamp((t - K[a].t) / (K[b].t - K[a].t), 0, 1);
@@ -1651,7 +1660,7 @@ function bakeMove(name) {
     for (const sd of ['Left', 'Right']) {
       if (!K.every(k => k.ikArm && k.ikArm[sd])) continue;
       const tg = [0, 1, 2].map(n => cat(K[i0].ikArm[sd][n], K[a].ikArm[sd][n], K[b].ikArm[sd][n], K[i3].ikArm[sd][n], u));
-      p.solveIK(sd, 'arm', p.V(tg[0], tg[1], tg[2]));
+      armIK(sd, p.V(tg[0], tg[1], tg[2]));
     }
     // Handgelenk relativ zum Becken (ikRel: { Right: [x, y, z] } in m, +x links, +y oben, +z vorn), bei allen Keys angegeben.
     // Bleibt am Koerper, auch wenn die Flugphase das Becken danach als Wurfparabel anhebt (Ball halten, Wurf, Pass, Rebound).
@@ -1659,12 +1668,32 @@ function bakeMove(name) {
       if (!K.every(k => k.ikRel && k.ikRel[sd])) continue;
       const tg = [0, 1, 2].map(n => cat(K[i0].ikRel[sd][n], K[a].ikRel[sd][n], K[b].ikRel[sd][n], K[i3].ikRel[sd][n], u));
       const h = p.wpos('Hips');
-      p.solveIK(sd, 'arm', p.V(h.x + tg[0], h.y + tg[1], h.z + tg[2]));
+      armIK(sd, p.V(h.x + tg[0], h.y + tg[1], h.z + tg[2]));
     }
     if (fixedY) j.Hips.y = hv('y');
     p.applyPoseFast();
     frames.push(JSON.parse(JSON.stringify(j)));
     ground.push(onGround || fixedY);
+  }
+  // Ruckstellen der Arme glaetten: stoesst die Arm-IK an eine Gelenkgrenze (Ebene 135, Heben 180), springt ein Winkel in einem Bild (Korbleger: Unterarm 85 -> 0, Klatschen: Armebene 1 -> 67). Wo sich die Geschwindigkeit eines
+  // Winkels sprunghaft aendert (2. Differenz > 30 Grad), wird dort mit den Nachbarbildern gemittelt (1/4, 1/2, 1/4), bis der Ruck weg
+  // ist. Schnelle, gleichmaessige Bewegungen (Armstreckung beim Wurf ~24 Grad je Bild) bleiben unberuehrt; erstes und letztes Bild auch.
+  // Fuesse nicht: sie sind schon auf den Boden gesetzt, geglaettet sanken sie bis 5,7 cm ein.
+  {
+    const ids = [];
+    for (const sd of ['Left', 'Right']) for (const n of ['Shoulder', 'Arm', 'ForeArm', 'Hand']) if (frames[0][sd + n]) ids.push(sd + n);
+    for (const id of ids) for (const k in frames[0][id]) {
+      for (let pass = 0; pass < 6; pass++) {
+        const v = frames.map(f => f[id][k]);
+        let hit = false;
+        for (let i = 1; i < F; i++) {
+          if (Math.abs(v[i - 1] - 2 * v[i] + v[i + 1]) <= 30) continue;
+          hit = true;
+          for (const n of [i - 1, i, i + 1]) if (n > 0 && n < F) frames[n][id][k] = 0.25 * v[n - 1] + 0.5 * v[n] + 0.25 * v[n + 1];
+        }
+        if (!hit) break;
+      }
+    }
   }
   // Flugphasen: Beckenhoehe als Wurfparabel zwischen dem letzten Bodenbild davor und dem ersten danach
   for (let i = 0; i <= F; i++) {
